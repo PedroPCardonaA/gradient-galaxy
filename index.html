@@ -197,6 +197,22 @@ table.log{width:100%;border-collapse:collapse;font-size:14px}
 table.log th,table.log td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left}
 table.log td.n,table.log th.n{text-align:right;white-space:nowrap}
 footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
+.guide-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.gsearch{font:inherit;font-size:15px;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--opt);color:var(--text);width:min(320px,100%)}
+.gsearch:focus{outline:none;border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.chips .pill{font-size:13px}
+.gtopic{margin-top:18px;scroll-margin-top:12px}
+.gtopic-h{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.gtopic-h .badge{font-size:14px;padding:5px 12px}
+.guide-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.gcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 14px;min-width:0}
+.gcard h4{margin:0 0 8px;font-size:15px}
+.gcard .formula{margin-bottom:8px}
+.gcard .gexp{font-size:14px;line-height:1.55;color:var(--text)}
+.gcard details{margin-top:8px;font-size:14px}
+.gcard details summary{cursor:pointer;color:var(--accent)}
+.gcard details div{margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--opt)}
 @media (max-width:700px){
   .hero{grid-template-columns:1fr}
   .qtext{font-size:16px}
@@ -204,6 +220,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
   .brand h1{font-size:20px}
   .score{min-width:auto}
   .opts.tfopts{grid-template-columns:1fr 1fr}
+  .guide-grid{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 .numwrap{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -273,6 +290,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
         <div class="row" style="margin-top:12px">
           <button class="big" id="launchBtn"></button>
           <button class="ghost" id="logBtn" data-i="log"></button>
+          <button class="ghost" id="guideBtn" data-i="guide"></button>
         </div>
         <div id="resumeBox"></div>
         <label class="toggle" style="margin-top:12px"><input type="checkbox" id="examOnly"><span data-i="examOnly"></span></label>
@@ -359,6 +377,18 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
       <div class="row" style="margin-top:14px">
         <button class="ghost" id="resetBtn" data-i="reset"></button>
       </div>
+    </div>
+  </section>
+  <!-- NAVIGATION GUIDE -->
+  <section id="guide" class="screen">
+    <div class="panel">
+      <div class="guide-head">
+        <h2 data-i="guide" style="margin:0"></h2>
+        <input class="gsearch" id="guideSearch" type="search" autocomplete="off">
+      </div>
+      <p class="hint" data-i="guideIntro"></p>
+      <div class="chips" id="guideChips"></div>
+      <div id="guideBody"></div>
     </div>
   </section>
   <footer data-i="footer"></footer>
@@ -4302,6 +4332,343 @@ QB.push(
 );
 }
 
+// ---- guide.js ----
+// 🧭 Navigation guide: every formula in the course with explanations, grouped by topic (t = TOPICS index).
+// Item: {id, n:[no,en] name, f:[no,en] formula HTML, e:[no,en] explanation HTML, ex?:[no,en] worked example}
+const GUIDE = (() => {
+const S = s => [s, s];
+const SUM = "Σ", y_ = "y<sub>pred</sub>";
+return [
+// ===== 0 Data & preprocessing =====
+{t:0, items:[
+ {id:"g-minmax", n:["Min-max-skalering","Min-max scaling"],
+  f:S("x′ = (x − min) / (max − min)"),
+  e:["Skalerer en feature til [0, 1] (<code>MinMaxScaler</code>). min og max hentes <b>bare fra treningsdataene</b>, og testdata får samme transformasjon. Testverdier utenfor treningsintervallet havner derfor utenfor [0, 1]. Følsom for outliere, fordi de bestemmer min og max.","Scales a feature to [0, 1] (<code>MinMaxScaler</code>). min and max come <b>from the training data only</b>, and test data get the same transform. Test values outside the training range therefore end up outside [0, 1]. Sensitive to outliers, because they set min and max."],
+  ex:["min = 12, max = 72, x = 27: (27 − 12)/60 = 0,25.","min = 12, max = 72, x = 27: (27 − 12)/60 = 0.25."]},
+ {id:"g-zscore", n:["Standardisering (z-score)","Standardisation (z-score)"],
+  f:S("z = (x − μ) / σ   ⇔   x = μ + z · σ"),
+  e:["Gir en feature snitt 0 og standardavvik 1 (<code>StandardScaler</code>). μ og σ fra treningsdataene. Del på σ (standardavviket), ikke σ² (variansen). Formelen baklengs (<code>inverse_transform</code>) gir tilbake originalverdien.","Gives a feature mean 0 and standard deviation 1 (<code>StandardScaler</code>). μ and σ from the training data. Divide by σ (the standard deviation), not σ² (the variance). The formula backwards (<code>inverse_transform</code>) gives back the original value."],
+  ex:["μ = 50, σ = 8, x = 38: z = −12/8 = −1,5.","μ = 50, σ = 8, x = 38: z = −12/8 = −1.5."]},
+ {id:"g-robust", n:["Robust skalering","Robust scaling"],
+  f:S("x′ = (x − median) / IQR,   IQR = Q<sub>3</sub> − Q<sub>1</sub>"),
+  e:["Bruker median og interkvartilbredde, som nesten ikke påvirkes av noen få ekstreme verdier. Velg denne når dataene har outliere. Både min-max og z-score dras av dem.","Uses the median and the interquartile range, which barely change because of a few extreme values. Choose it when the data have outliers. Both min-max and z-score are pulled by them."]},
+ {id:"g-onehot", n:["Antall kolonner etter koding","Number of columns after encoding"],
+  f:["One-hot: k kolonner for en nominell feature med k verdier (k − 1 med drop-first)<br>Ordinal / label encoding: 1 kolonne · numerisk: 1 kolonne","One-hot: k columns for a nominal feature with k values (k − 1 with drop-first)<br>Ordinal / label encoding: 1 column · numeric: 1 column"],
+  e:["Nominelle kategorier (farge, land) har ingen rekkefølge og bør one-hot-kodes. Ordinale (S/M/L) har en naturlig rekkefølge og kan få ett tall hver. Numeriske features beholdes.","Nominal categories (colour, country) have no order and should be one-hot encoded. Ordinal ones (S/M/L) have a natural order and can get one number each. Numeric features are kept."],
+  ex:["4 farger + 6 land + størrelse (ordinal) + alder = 4 + 6 + 1 + 1 = 12 kolonner.","4 colours + 6 countries + size (ordinal) + age = 4 + 6 + 1 + 1 = 12 columns."]},
+ {id:"g-impute", n:["Gjennomsnitt og median (imputering)","Mean and median (imputation)"],
+  f:["x̄ = (1/n) · " + SUM + "<sub>i</sub> x<sub>i</sub>   (over de n kjente verdiene)<br>median = midterste verdi i sortert rekkefølge (snitt av de to midterste hvis n er partall)","x̄ = (1/n) · " + SUM + "<sub>i</sub> x<sub>i</sub>   (over the n known values)<br>median = the middle value in sorted order (mean of the two middle ones if n is even)"],
+  e:["Manglende verdier kan fylles inn med snitt eller median av de <i>kjente</i> verdiene, beregnet på treningsdataene. Del på antall kjente verdier. Medianen er mer robust mot ekstreme verdier. <code>dropna()</code> fjerner i stedet hele rader.","Missing values can be filled in with the mean or median of the <i>known</i> values, computed on the training data. Divide by the number of known values. The median is more robust to extreme values. <code>dropna()</code> instead removes whole rows."],
+  ex:["Age = 22, 38, 26, 35, 35, ?, 54, 2, 27: snitt = 239/8 ≈ 29,88, median = (27 + 35)/2 = 31.","Age = 22, 38, 26, 35, 35, ?, 54, 2, 27: mean = 239/8 ≈ 29.88, median = (27 + 35)/2 = 31."]},
+ {id:"g-split", n:["Trenings-, validerings- og testsett","Training, validation and test sets"],
+  f:["<code>train_test_split(…, test_size=t)</code>: andelen t av radene som sendes inn går til den andre delen<br>n<sub>test</sub> = t<sub>1</sub>·n · n<sub>val</sub> = t<sub>2</sub>·(n − n<sub>test</sub>) · n<sub>train</sub> = resten","<code>train_test_split(…, test_size=t)</code>: the share t of the rows passed in goes to the second part<br>n<sub>test</sub> = t<sub>1</sub>·n · n<sub>val</sub> = t<sub>2</sub>·(n − n<sub>test</sub>) · n<sub>train</sub> = the rest"],
+  e:["Trening tilpasser parametrene, validering velger hyperparametre, og test brukes bare til den endelige rapporten. Splitter du to ganger, ser det andre kallet bare restene etter det første. Ved ubalanserte klasser: <code>stratify=y</code>.","Training fits the parameters, validation picks hyperparameters, and test is only used for the final report. If you split twice, the second call only sees what is left after the first. With imbalanced classes: <code>stratify=y</code>."],
+  ex:["2000 rader, test_size 0,2 og så 0,25: test 400, validering 0,25·1600 = 400, trening 1200.","2000 rows, test_size 0.2 and then 0.25: test 400, validation 0.25·1600 = 400, training 1200."]}
+]},
+// ===== 1 Logistic regression & gradient descent =====
+{t:1, items:[
+ {id:"g-linz", n:["Lineær kombinasjon","Linear combination"],
+  f:S("z = " + SUM + "<sub>i=1</sub><sup>n</sup> w<sub>i</sub>x<sub>i</sub> + b = <b>w</b>·<b>x</b> + b"),
+  e:["Hver vekt w<sub>i</sub> sier hvor viktig feature x<sub>i</sub> er, og b er biasen (skjæringspunktet). z er et tall, ikke en vektor (prikkprodukt), og kan ha hvilken som helst verdi.","Each weight w<sub>i</sub> says how important feature x<sub>i</sub> is, and b is the bias (intercept). z is a number, not a vector (dot product), and can take any value."]},
+ {id:"g-sigmoid", n:["Sigmoid (logistisk funksjon)","Sigmoid (logistic function)"],
+  f:S("σ(z) = 1 / (1 + e<sup>−z</sup>)   ·   " + y_ + " = σ(<b>w</b>·<b>x</b> + b)   ·   σ′(z) = σ(z)(1 − σ(z))"),
+  e:["Klemmer z inn i (0, 1), slik at " + y_ + " kan tolkes som p(y = 1 | x). σ(0) = 0,5, store positive z gir nær 1, store negative nær 0. Den deriverte brukes i backpropagation.","Squeezes z into (0, 1), so " + y_ + " can be read as p(y = 1 | x). σ(0) = 0.5, large positive z give close to 1, large negative close to 0. The derivative is used in backpropagation."],
+  ex:["w = (2, −1), b = 0,5, x = (1, 3): z = 2 − 3 + 0,5 = −0,5, σ(−0,5) ≈ 0,38.","w = (2, −1), b = 0.5, x = (1, 3): z = 2 − 3 + 0.5 = −0.5, σ(−0.5) ≈ 0.38."]},
+ {id:"g-threshold", n:["Klassifiseringsterskel","Classification threshold"],
+  f:["ŷ = 1 hvis " + y_ + " > terskel, ellers 0<br>σ(z) = p   ⇔   z = ln(p / (1 − p))","ŷ = 1 if " + y_ + " > threshold, otherwise 0<br>σ(z) = p   ⇔   z = ln(p / (1 − p))"],
+  e:["Standard er 0,5, som svarer til z = 0. Høyere terskel gir færre positive (recall ned, precision som regel opp). Lavere terskel gir flere positive. Terskelen endrer ikke modellen, bare hvordan prediksjonene tolkes.","The default is 0.5, which corresponds to z = 0. A higher threshold gives fewer positives (recall down, precision usually up). A lower threshold gives more positives. The threshold does not change the model, only how the predictions are read."],
+  ex:["w = 2, b = −3, terskel 0,8: z = ln 4 ≈ 1,39, så x = (1,39 + 3)/2 ≈ 2,19.","w = 2, b = −3, threshold 0.8: z = ln 4 ≈ 1.39, so x = (1.39 + 3)/2 ≈ 2.19."]},
+ {id:"g-bce", n:["Binær cross-entropy (log loss)","Binary cross-entropy (log loss)"],
+  f:S("L(" + y_ + ", y) = −y ln " + y_ + " − (1 − y) ln(1 − " + y_ + ")"),
+  e:["Minus log-likelihood. For y = 1 teller bare −ln " + y_ + ", og for y = 0 bare −ln(1 − " + y_ + "). Tapet er 0 ved perfekt prediksjon og vokser mot ∞ når modellen er sikker og tar feil. Bruk naturlig logaritme.","Minus the log-likelihood. For y = 1 only −ln " + y_ + " counts, and for y = 0 only −ln(1 − " + y_ + "). The loss is 0 for a perfect prediction and grows towards ∞ when the model is confident and wrong. Use the natural logarithm."],
+  ex:["y = 1, " + y_ + " = 0,8: L = −ln 0,8 ≈ 0,22.","y = 1, " + y_ + " = 0.8: L = −ln 0.8 ≈ 0.22."]},
+ {id:"g-avgloss", n:["Gjennomsnittlig tap (treningsmål)","Average loss (training objective)"],
+  f:S("θ̂ = arg min<sub>θ</sub> (1/N) · " + SUM + "<sub>i=1</sub><sup>N</sup> L(f(x<sup>(i)</sup>; θ), y<sup>(i)</sup>),   θ = (<b>w</b>, b)"),
+  e:["Trening betyr å finne parametrene som minimerer snittet av tapet over alle N treningspunkter. Husk å dele på N.","Training means finding the parameters that minimise the mean loss over all N training points. Remember to divide by N."]},
+ {id:"g-grad-logreg", n:["Gradienten for logistisk regresjon","The gradient for logistic regression"],
+  f:S("∂L/∂w<sub>j</sub> = (" + y_ + " − y) · x<sub>j</sub>   ·   ∂L/∂b = " + y_ + " − y"),
+  e:["Med cross-entropy og sigmoid blir gradienten bare feilen ganger inputen. Negativ gradient betyr at tapet minker når parameteren øker.","With cross-entropy and sigmoid, the gradient is just the error times the input. A negative gradient means the loss decreases when the parameter increases."],
+  ex:["x = (2, 1), y = 1, " + y_ + " = 0,5: ∂L/∂w = (−1; −0,5), ∂L/∂b = −0,5.","x = (2, 1), y = 1, " + y_ + " = 0.5: ∂L/∂w = (−1, −0.5), ∂L/∂b = −0.5."]},
+ {id:"g-gd", n:["Gradient descent","Gradient descent"],
+  f:S("θ<sub>t+1</sub> = θ<sub>t</sub> − η · ∂L/∂θ"),
+  e:["Gradienten peker mot økende tap, så vi går motsatt vei (minustegnet). η er læringsraten, en hyperparameter. For stor η gir oscillasjon eller divergens. For liten η gir svært langsom læring. Oppdater alle parametre, også b.","The gradient points towards increasing loss, so we move the opposite way (the minus sign). η is the learning rate, a hyperparameter. Too large an η gives oscillation or divergence. Too small an η gives very slow learning. Update every parameter, b too."],
+  ex:["w = 3, ∂L/∂w = 4, η = 0,25: w = 3 − 1 = 2.","w = 3, ∂L/∂w = 4, η = 0.25: w = 3 − 1 = 2."]}
+]},
+// ===== 2 Classification metrics =====
+{t:2, items:[
+ {id:"g-cm", n:["Confusion matrix","Confusion matrix"],
+  f:["TP = sann positiv · FN = sann positiv, predikert negativ · FP = sann negativ, predikert positiv · TN = sann negativ<br>P = TP + FN (alle positive) · N = TN + FP (alle negative)","TP = true positive · FN = actually positive, predicted negative · FP = actually negative, predicted positive · TN = true negative<br>P = TP + FN (all positives) · N = TN + FP (all negatives)"],
+  e:["Riktige prediksjoner ligger på diagonalen, feil utenfor. Sjekk alltid om radene er sann eller predikert klasse, og hvilken klasse som er positiv.","Correct predictions lie on the diagonal, errors off it. Always check whether the rows are the true or the predicted class, and which class is positive."]},
+ {id:"g-recall", n:["Recall / sensitivitet / TPR","Recall / sensitivity / TPR"],
+  f:S("TPR = Recall = TP / P = TP / (TP + FN)"),
+  e:["Andelen av de faktisk positive som blir funnet. Viktig når falske negative er dyre (alvorlig sykdom, screening). Deler på <i>sanne</i> positive.","The share of the actual positives that are found. Important when false negatives are costly (serious disease, screening). Divides by the <i>actual</i> positives."]},
+ {id:"g-spec", n:["Spesifisitet / TNR","Specificity / TNR"],
+  f:S("TNR = TN / N = TN / (TN + FP)"),
+  e:["Andelen av de faktisk negative som blir korrekt klassifisert som negative.","The share of the actual negatives that are correctly classified as negative."]},
+ {id:"g-fpr", n:["False positive rate","False positive rate"],
+  f:S("FPR = FP / N = FP / (FP + TN) = 1 − TNR"),
+  e:["Sannsynligheten for falsk alarm. Dette er x-aksen i ROC-kurven. Deler på alle negative, ikke på de predikert positive (det ville vært 1 − precision).","The probability of a false alarm. This is the x-axis of the ROC curve. Divides by all negatives, not by the predicted positives (that would be 1 − precision)."]},
+ {id:"g-precision", n:["Precision / PPV","Precision / PPV"],
+  f:S("Precision = TP / (TP + FP)"),
+  e:["Andelen av de predikert positive som faktisk er positive. Viktig når falske alarmer er dyre. Avhenger av klassefordelingen: med få positive kan precision bli lav selv med lav FPR.","The share of the predicted positives that are actually positive. Important when false alarms are costly. Depends on the class distribution: with few positives, precision can be low even with a low FPR."]},
+ {id:"g-accuracy", n:["Accuracy (treffsikkerhet)","Accuracy"],
+  f:S("Accuracy = (TP + TN) / (TP + TN + FP + FN)"),
+  e:["Andelen riktige prediksjoner. Misvisende ved ubalanserte klasser: en modell som alltid sier «negativ» får 95 % med 5 % positive, men recall 0.","The share of correct predictions. Misleading with imbalanced classes: a model that always says “negative” gets 95 % with 5 % positives, but recall 0."]},
+ {id:"g-f1", n:["F1-score","F1 score"],
+  f:S("F1 = 2 · Precision · Recall / (Precision + Recall)"),
+  e:["Harmonisk snitt av precision og recall. Den blir lav hvis én av dem er lav. Precision = recall nøyaktig når FP = FN.","The harmonic mean of precision and recall. It is low if either of them is low. Precision = recall exactly when FP = FN."],
+  ex:["TP = 40, FN = 20, FP = 10: P = 0,8, R ≈ 0,667, F1 ≈ 0,73.","TP = 40, FN = 20, FP = 10: P = 0.8, R ≈ 0.667, F1 ≈ 0.73."]},
+ {id:"g-auc", n:["ROC-kurve og AUC","ROC curve and AUC"],
+  f:["ROC: (FPR, TPR) for alle terskler fra 1 til 0, fra (0, 0) til (1, 1)<br>AUC = P(s(x<sup>+</sup>) > s(x<sup>−</sup>)) = (antall par der positiv har høyest skår) / (n<sup>+</sup> · n<sup>−</sup>)","ROC: (FPR, TPR) for every threshold from 1 to 0, from (0, 0) to (1, 1)<br>AUC = P(s(x<sup>+</sup>) > s(x<sup>−</sup>)) = (number of pairs where the positive scores higher) / (n<sup>+</sup> · n<sup>−</sup>)"],
+  e:["Diagonalen er tilfeldig gjetning (AUC = 0,5), og maks er 1. AUC < 0,5 betyr systematisk feil rangering; snur du prediksjonene får du 1 − AUC. Ved sterk ubalanse er en precision–recall-kurve ofte mer informativ.","The diagonal is random guessing (AUC = 0.5), and the maximum is 1. AUC < 0.5 means systematically wrong ranking; flipping the predictions gives 1 − AUC. Under strong imbalance a precision–recall curve is often more informative."],
+  ex:["Positive 0,9, 0,8, 0,4 og negative 0,7, 0,3, 0,2: 8 av 9 par riktig, AUC ≈ 0,89.","Positives 0.9, 0.8, 0.4 and negatives 0.7, 0.3, 0.2: 8 of 9 pairs right, AUC ≈ 0.89."]}
+]},
+// ===== 3 Bayes & imbalanced data =====
+{t:3, items:[
+ {id:"g-bayes", n:["Bayes' teorem","Bayes' theorem"],
+  f:S("p(C<sub>k</sub>|x) = p(x|C<sub>k</sub>) · p(C<sub>k</sub>) / p(x)"),
+  e:["p(C<sub>k</sub>) er prior (klassefordelingen), p(x|C<sub>k</sub>) er likelihood, p(x) er evidens og p(C<sub>k</sub>|x) er posterior. p(x) er lik for alle klasser og sikrer at posteriorene summerer til 1.","p(C<sub>k</sub>) is the prior (the class distribution), p(x|C<sub>k</sub>) is the likelihood, p(x) is the evidence and p(C<sub>k</sub>|x) is the posterior. p(x) is the same for all classes and makes the posteriors sum to 1."]},
+ {id:"g-totalprob", n:["Total sannsynlighet (evidensen)","Total probability (the evidence)"],
+  f:["p(x) = " + SUM + "<sub>k</sub> p(x|C<sub>k</sub>) · p(C<sub>k</sub>)   ·   to klasser: p(x|C)p(C) + p(x|¬C)p(¬C)", "p(x) = " + SUM + "<sub>k</sub> p(x|C<sub>k</sub>) · p(C<sub>k</sub>)   ·   two classes: p(x|C)p(C) + p(x|¬C)p(¬C)"],
+  e:["Typisk i testoppgaver: p(+) = sensitivitet · prevalens + falsk-positiv-rate · (1 − prevalens). Med lav prevalens kan p(syk | +) bli overraskende lav.","Typical in test questions: p(+) = sensitivity · prevalence + false-positive rate · (1 − prevalence). With low prevalence p(sick | +) can be surprisingly low."],
+  ex:["Prevalens 1 %, sensitivitet 90 %, FPR 5 %: 0,009 / (0,009 + 0,0495) ≈ 15,4 %.","Prevalence 1 %, sensitivity 90 %, FPR 5 %: 0.009 / (0.009 + 0.0495) ≈ 15.4 %."]},
+ {id:"g-naivebayes", n:["Naiv Bayes","Naive Bayes"],
+  f:S("p(C<sub>k</sub>|x) ∝ p(C<sub>k</sub>) · Π<sub>i=1</sub><sup>n</sup> p(x<sub>i</sub>|C<sub>k</sub>)   ·   ŷ = arg max<sub>k</sub> p(C<sub>k</sub>) · Π<sub>i</sub> p(x<sub>i</sub>|C<sub>k</sub>)"),
+  e:["Antar at featurene er uavhengige gitt klassen, slik at simultanfordelingen blir et produkt. Skårene er ikke kalibrerte sannsynligheter, men rekkefølgen er nok for argmax. Ikke glem prior.","Assumes the features are independent given the class, so the joint distribution becomes a product. The scores are not calibrated probabilities, but their order is enough for the argmax. Do not forget the prior."]},
+ {id:"g-normalise", n:["Normalisering av posterior","Normalising the posterior"],
+  f:S("p(C<sub>k</sub>|x) = s<sub>k</sub> / " + SUM + "<sub>j</sub> s<sub>j</sub>,   s<sub>k</sub> = p(C<sub>k</sub>) · Π<sub>i</sub> p(x<sub>i</sub>|C<sub>k</sub>)"),
+  e:["Del hver skår på summen av skårene for å få sannsynligheter som summerer til 1. Den rå skåren s<sub>k</sub> er ikke en sannsynlighet.","Divide each score by the sum of the scores to get probabilities that sum to 1. The raw score s<sub>k</sub> is not a probability."],
+  ex:["s<sub>spam</sub> = 0,4·0,5·0,6 = 0,12 og s<sub>ham</sub> = 0,6·0,1·0,3 = 0,018: p(spam|x) = 0,12/0,138 ≈ 0,87.","s<sub>spam</sub> = 0.4·0.5·0.6 = 0.12 and s<sub>ham</sub> = 0.6·0.1·0.3 = 0.018: p(spam|x) = 0.12/0.138 ≈ 0.87."]},
+ {id:"g-prior-shift", n:["Bayes-grense og prior shift","Bayes boundary and prior shift"],
+  f:["Velg C = 1 når p(x|C=1)·p(C=1) > p(x|C=0)·p(C=0)<br>To Gauss med μ = ∓1, σ = 1: x* = −ln(p(C=1)/p(C=0)) / 2","Choose C = 1 when p(x|C=1)·p(C=1) > p(x|C=0)·p(C=0)<br>Two Gaussians with μ = ∓1, σ = 1: x* = −ln(p(C=1)/p(C=0)) / 2"],
+  e:["Grensen ligger der de vektede tetthetene er like. Endres prior, flyttes grensen bort fra den hyppige klassen, så den «vinner» et større område. Ved skjeve klasser dominerer p(C<sub>k</sub>) prediksjonene (prior probability shift).","The boundary is where the weighted densities are equal. If the prior changes, the boundary moves away from the frequent class, so it “wins” a larger region. With imbalanced classes p(C<sub>k</sub>) dominates the predictions (prior probability shift)."]},
+ {id:"g-resample", n:["Under- og oversampling","Under- and oversampling"],
+  f:["Undersampling: n<sub>maj</sub> → n<sub>min</sub>, totalt 2·n<sub>min</sub><br>Oversampling: n<sub>min</sub> → n<sub>maj</sub>, totalt 2·n<sub>maj</sub>, duplikater = n<sub>maj</sub> − n<sub>min</sub>","Undersampling: n<sub>maj</sub> → n<sub>min</sub>, total 2·n<sub>min</sub><br>Oversampling: n<sub>min</sub> → n<sub>maj</sub>, total 2·n<sub>maj</sub>, duplicates = n<sub>maj</sub> − n<sub>min</sub>"],
+  e:["Undersampling kaster data og kan gi undertilpasning. Oversampling kopierer minoritetsklassen og kan gi overtilpasning. Teknikkene kan kombineres. Resample bare treningsdataene.","Undersampling throws data away and can cause underfitting. Oversampling copies the minority class and can cause overfitting. The techniques can be combined. Resample only the training data."],
+  ex:["100 vs 1000: undersampling gir 200 totalt. Oversampling gir 2000 totalt, med 900 duplikater.","100 vs 1000: undersampling gives 200 in total. Oversampling gives 2000 in total, with 900 duplicates."]},
+ {id:"g-classweights", n:["Klassevekter","Class weights"],
+  f:S("w<sub>c</sub> = n / (K · n<sub>c</sub>)"),
+  e:["n er antall eksempler, K antall klasser og n<sub>c</sub> antall i klasse c. Vektene er omvendt proporsjonale med klassestørrelsen, så sjeldne klasser får størst vekt (<code>class_weight=\"balanced\"</code>).","n is the number of examples, K the number of classes and n<sub>c</sub> the count in class c. The weights are inversely proportional to the class size, so rare classes get the largest weight (<code>class_weight=\"balanced\"</code>)."],
+  ex:["9000 negative og 1000 positive: w<sub>pos</sub> = 10 000/(2·1000) = 5, w<sub>neg</sub> ≈ 0,56.","9000 negatives and 1000 positives: w<sub>pos</sub> = 10,000/(2·1000) = 5, w<sub>neg</sub> ≈ 0.56."]},
+ {id:"g-weightedbce", n:["Vektet cross-entropy","Weighted cross-entropy"],
+  f:S("L(" + y_ + ", y) = −w<sub>1</sub> · y · ln " + y_ + " − w<sub>0</sub> · (1 − y) · ln(1 − " + y_ + ")"),
+  e:["w<sub>1</sub> vekter leddet for klasse y = 1 og w<sub>0</sub> leddet for y = 0. Større vekt på en klasse gjør feil på den dyrere, så modellen prioriterer den.","w<sub>1</sub> weights the term for class y = 1 and w<sub>0</sub> the term for y = 0. A larger weight on a class makes errors on it more costly, so the model prioritises it."],
+  ex:["w<sub>1</sub> = 9, y = 1, " + y_ + " = 0,25: L = −9·ln 0,25 ≈ 12,48.","w<sub>1</sub> = 9, y = 1, " + y_ + " = 0.25: L = −9·ln 0.25 ≈ 12.48."]},
+ {id:"g-curse", n:["Dimensjonsforbannelsen","The curse of dimensionality"],
+  f:["Bins totalt = b<sup>d</sup> (b bins per akse, d dimensjoner)<br>Underkube med andel r av volumet i [0, 1]<sup>d</sup>: sidekant e = r<sup>1/d</sup>","Total bins = b<sup>d</sup> (b bins per axis, d dimensions)<br>Sub-cube with share r of the volume in [0, 1]<sup>d</sup>: edge e = r<sup>1/d</sup>"],
+  e:["Antall datapunkter du trenger vokser eksponentielt med d. I høye dimensjoner blir alle avstander omtrent like store, og «lokale» naboer er ikke lenger lokale.","The number of data points you need grows exponentially with d. In high dimensions all distances become about equal, and “local” neighbours are no longer local."],
+  ex:["10 bins og 10 punkter per bin: d = 3 krever 10⁴ punkter. 10 % av en 10D-kube: e = 0,1<sup>0,1</sup> ≈ 0,79.","10 bins and 10 points per bin: d = 3 needs 10⁴ points. 10 % of a 10D cube: e = 0.1<sup>0.1</sup> ≈ 0.79."]}
+]},
+// ===== 4 Trees & ensembles =====
+{t:4, items:[
+ {id:"g-gini", n:["Gini-urenhet","Gini impurity"],
+  f:S("Gini(D) = 1 − " + SUM + "<sub>i=1</sub><sup>k</sup> p<sub>i</sub><sup>2</sup>"),
+  e:["Sannsynligheten for å klassifisere et tilfeldig punkt feil hvis du gjetter etter klassefordelingen i noden. For to klasser ligger den i [0, 0,5]: 0 er en ren node og 0,5 en jevn fordeling. Default i sklearn og billigere enn entropi.","The probability of misclassifying a random point if you guess according to the class distribution in the node. For two classes it lies in [0, 0.5]: 0 is a pure node and 0.5 an even split. The default in sklearn and cheaper than entropy."],
+  ex:["[30, 20]: 1 − 0,6² − 0,4² = 0,48.","[30, 20]: 1 − 0.6² − 0.4² = 0.48."]},
+ {id:"g-gini-split", n:["Gini etter en splitt","Gini after a split"],
+  f:S("Gini<sub>f</sub>(D) = (n<sub>1</sub>/n) · Gini(D<sub>1</sub>) + (n<sub>2</sub>/n) · Gini(D<sub>2</sub>)"),
+  e:["Vekt hvert barn med andelen punkter det får. Velg den featuren og verdien som gir <b>lavest</b> vektet urenhet. Et uvektet snitt er en vanlig feil.","Weight each child by the share of points it gets. Choose the feature and value with the <b>lowest</b> weighted impurity. An unweighted mean is a common mistake."],
+  ex:["Rot 120 + 80 punkter med Gini 0,42 og 0,32: 0,6·0,42 + 0,4·0,32 = 0,38.","Root 120 + 80 points with Gini 0.42 and 0.32: 0.6·0.42 + 0.4·0.32 = 0.38."]},
+ {id:"g-entropy", n:["Entropi","Entropy"],
+  f:S("I(p<sub>1</sub>, …, p<sub>k</sub>) = −" + SUM + "<sub>i=1</sub><sup>k</sup> p<sub>i</sub> log<sub>2</sub>(p<sub>i</sub>)"),
+  e:["Usikkerheten i en fordeling. For to klasser er den 1 ved (0,5; 0,5) og 0 når alle er i samme klasse. Bruk log<sub>2</sub>, og 0·log 0 = 0.","The uncertainty in a distribution. For two classes it is 1 at (0.5, 0.5) and 0 when everything is in one class. Use log<sub>2</sub>, and 0·log 0 = 0."],
+  ex:["p = 9, n = 5: I(9/14, 5/14) ≈ 0,94. [6, 2]: ≈ 0,81.","p = 9, n = 5: I(9/14, 5/14) ≈ 0.94. [6, 2]: ≈ 0.81."]},
+ {id:"g-infogain", n:["Informasjonsgevinst","Information gain"],
+  f:["ΔI = I<sub>før</sub> − E[I<sub>etter</sub>],   E[I<sub>etter</sub>] = " + SUM + "<sub>i=1</sub><sup>s</sup> ((p<sub>i</sub> + n<sub>i</sub>)/(p + n)) · I(p<sub>i</sub>/(p<sub>i</sub> + n<sub>i</sub>), n<sub>i</sub>/(p<sub>i</sub> + n<sub>i</sub>))","ΔI = I<sub>before</sub> − E[I<sub>after</sub>],   E[I<sub>after</sub>] = " + SUM + "<sub>i=1</sub><sup>s</sup> ((p<sub>i</sub> + n<sub>i</sub>)/(p + n)) · I(p<sub>i</sub>/(p<sub>i</sub> + n<sub>i</sub>), n<sub>i</sub>/(p<sub>i</sub> + n<sub>i</sub>))"],
+  e:["Hvor mye en splitt reduserer entropien. Velg splitten med <b>størst</b> ΔI. Barna vektes med sin andel av punktene.","How much a split reduces the entropy. Choose the split with the <b>largest</b> ΔI. The children are weighted by their share of the points."],
+  ex:["[9, 5] → [4, 5] og [5, 0]: E[I<sub>etter</sub>] ≈ 0,64, ΔI ≈ 0,94 − 0,64 = 0,30.","[9, 5] → [4, 5] and [5, 0]: E[I<sub>after</sub>] ≈ 0.64, ΔI ≈ 0.94 − 0.64 = 0.30."]},
+ {id:"g-regtree", n:["Splitt i regresjonstrær","Splits in regression trees"],
+  f:["Var(D) = (1/n) · " + SUM + " (y − ȳ)<sup>2</sup><br>Var<sub>splitt</sub> = (n<sub>1</sub>/n) · Var(D<sub>1</sub>) + (n<sub>2</sub>/n) · Var(D<sub>2</sub>)   ·   løvnode predikerer ȳ","Var(D) = (1/n) · " + SUM + " (y − ȳ)<sup>2</sup><br>Var<sub>split</sub> = (n<sub>1</sub>/n) · Var(D<sub>1</sub>) + (n<sub>2</sub>/n) · Var(D<sub>2</sub>)   ·   a leaf predicts ȳ"],
+  e:["Regresjonstrær velger splitten som gir lavest (vektet) varians, altså lavest MSE, i barna. Hver løvnode predikerer snittet av targets i sin region. Et binært tre med dybde d har høyst 2<sup>d</sup> løvnoder.","Regression trees choose the split that gives the lowest (weighted) variance, i.e. the lowest MSE, in the children. Each leaf predicts the mean of the targets in its region. A binary tree of depth d has at most 2<sup>d</sup> leaves."],
+  ex:["{1, 2, 3} | {10, 11, 12}: 0,5·⅔ + 0,5·⅔ ≈ 0,67.","{1, 2, 3} | {10, 11, 12}: 0.5·⅔ + 0.5·⅔ ≈ 0.67."]},
+ {id:"g-oob", n:["Bootstrap og out-of-bag","Bootstrap and out-of-bag"],
+  f:["P(out-of-bag) = (1 − 1/n)<sup>n</sup> → 1/e ≈ 0,368 når n → ∞", "P(out-of-bag) = (1 − 1/n)<sup>n</sup> → 1/e ≈ 0.368 as n → ∞"],
+  e:["I bagging trekkes n punkter <i>med tilbakelegging</i>. Hvert punkt har sannsynlighet 1 − 1/n for ikke å bli trukket i én trekning. Omtrent 37 % havner utenfor (out-of-bag) og kan brukes til validering.","In bagging, n points are drawn <i>with replacement</i>. Each point has probability 1 − 1/n of not being drawn in one draw. About 37 % end up out-of-bag and can be used for validation."],
+  ex:["n = 10: 0,9<sup>10</sup> ≈ 34,9 %.","n = 10: 0.9<sup>10</sup> ≈ 34.9 %."]},
+ {id:"g-adaboost", n:["AdaBoost: vekt per modell","AdaBoost: weight per model"],
+  f:S("α = ½ · ln((1 − ε) / ε)"),
+  e:["ε er den vektede feilraten til den svake modellen. Lav feil gir stor α (modellen stemmer tyngre), og ε = 0,5 gir α = 0. Feilklassifiserte punkter får økt vekt til neste modell, så modellene trenes sekvensielt.","ε is the weak model's weighted error rate. A low error gives a large α (the model's vote counts more), and ε = 0.5 gives α = 0. Misclassified points get a higher weight for the next model, so the models are trained sequentially."],
+  ex:["ε = 0,2: α = ½·ln 4 ≈ 0,69.","ε = 0.2: α = ½·ln 4 ≈ 0.69."]},
+ {id:"g-gboost", n:["Gradient boosting","Gradient boosting"],
+  f:["Pseudo-residual: g = −(y − F(x))<br>new_ensemble = previous_ensemble − learning_rate · new_tree   (new_tree tilpasses g)","Pseudo-residual: g = −(y − F(x))<br>new_ensemble = previous_ensemble − learning_rate · new_tree   (new_tree is fitted to g)"],
+  e:["Hvert nye tre predikerer feilen til forrige ensemble, og ensemblet tar et lite steg mot target. Det er gradient descent i rommet av trær. AdaBoost vekter i stedet datapunkter.","Each new tree predicts the error of the previous ensemble, and the ensemble takes a small step towards the target. It is gradient descent in the space of trees. AdaBoost weights data points instead."],
+  ex:["y = 10, F = 6, lr = 0,1: g = −4, nytt F = 6 − 0,1·(−4) = 6,4.","y = 10, F = 6, lr = 0.1: g = −4, new F = 6 − 0.1·(−4) = 6.4."]}
+]},
+// ===== 5 Regression, bias/variance & validation =====
+{t:5, items:[
+ {id:"g-linreg", n:["Lineær regresjon","Linear regression"],
+  f:["f(x) = β<sub>0</sub> + β<sub>1</sub>x<sub>1</sub> + … + β<sub>n</sub>x<sub>n</sub>   ·   (n + 1) parametre", "f(x) = β<sub>0</sub> + β<sub>1</sub>x<sub>1</sub> + … + β<sub>n</sub>x<sub>n</sub>   ·   (n + 1) parameters"],
+  e:["β<sub>0</sub> er biasen (verdien ved x = 0) og β<sub>i</sub> stigningstallene. Polynomisk regresjon er fortsatt lineær i parametrene: f(x) = β<sub>0</sub> + β<sub>1</sub>x + … + β<sub>M</sub>x<sup>M</sup>, med genererte features.","β<sub>0</sub> is the bias (the value at x = 0) and β<sub>i</sub> are the slopes. Polynomial regression is still linear in the parameters: f(x) = β<sub>0</sub> + β<sub>1</sub>x + … + β<sub>M</sub>x<sup>M</sup>, with generated features."]},
+ {id:"g-mse", n:["Mean squared error","Mean squared error"],
+  f:["Notatene: MSE = (1/2N) · " + SUM + "<sub>i</sub> (y<sup>(i)</sup> − f(x<sup>(i)</sup>))<sup>2</sup><br>Vanlig (sklearn): MSE = (1/N) · " + SUM + "<sub>i</sub> (y<sup>(i)</sup> − ŷ<sup>(i)</sup>)<sup>2</sup>","The notes: MSE = (1/2N) · " + SUM + "<sub>i</sub> (y<sup>(i)</sup> − f(x<sup>(i)</sup>))<sup>2</sup><br>Common (sklearn): MSE = (1/N) · " + SUM + "<sub>i</sub> (y<sup>(i)</sup> − ŷ<sup>(i)</sup>)<sup>2</sup>"],
+  e:["Faktoren ½ er bare for bekvemmelighet: den forsvinner når du deriverer. Les oppgaven nøye for å se hvilken definisjon som brukes. Minimere MSE tilsvarer å maksimere likelihood under Gaussisk støy.","The factor ½ is only for convenience: it cancels when you differentiate. Read the question carefully to see which definition is used. Minimising MSE is the same as maximising the likelihood under Gaussian noise."],
+  ex:["y = [3, 5, 2, 7], ŷ = [2, 5, 4, 6]: SSE = 6, MSE (1/N) = 1,5.","y = [3, 5, 2, 7], ŷ = [2, 5, 4, 6]: SSE = 6, MSE (1/N) = 1.5."]},
+ {id:"g-linreg-gd", n:["Gradient descent for lineær regresjon","Gradient descent for linear regression"],
+  f:S("β<sub>0</sub> ← β<sub>0</sub> − η · (1/N) " + SUM + "<sub>i</sub> (f(x<sup>(i)</sup>) − y<sup>(i)</sup>)<br>β<sub>1</sub> ← β<sub>1</sub> − η · (1/N) " + SUM + "<sub>i</sub> x<sup>(i)</sup> (f(x<sup>(i)</sup>) − y<sup>(i)</sup>)"),
+  e:["Fra den deriverte av MSE med faktor ½. Hvis modellen overestimerer overalt, er ∂L/∂β<sub>0</sub> > 0, så β<sub>0</sub> minker.","From the derivative of MSE with the factor ½. If the model overestimates everywhere, ∂L/∂β<sub>0</sub> > 0, so β<sub>0</sub> decreases."],
+  ex:["(1, 3), (2, 5), β = (0, 1), η = 0,1: feil −2 og −3, β<sub>0</sub> = 0,25, β<sub>1</sub> = 1,4.","(1, 3), (2, 5), β = (0, 1), η = 0.1: errors −2 and −3, β<sub>0</sub> = 0.25, β<sub>1</sub> = 1.4."]},
+ {id:"g-r2", n:["R² (forklaringsgrad)","R² (coefficient of determination)"],
+  f:S("R<sup>2</sup> = 1 − SSE / SST,   SSE = " + SUM + " (y − ŷ)<sup>2</sup>,   SST = " + SUM + " (y − ȳ)<sup>2</sup>"),
+  e:["Andelen av variansen i y som modellen forklarer. 1 er perfekt, 0 er like godt som å alltid predikere ȳ, og negativ er dårligere enn det.","The share of the variance in y that the model explains. 1 is perfect, 0 is as good as always predicting ȳ, and negative is worse than that."]},
+ {id:"g-biasvar", n:["Bias–varians-dekomposisjonen","The bias–variance decomposition"],
+  f:S("E<sub>D</sub>[(y − f(x; D))<sup>2</sup>] = (Bias<sub>D</sub>[f(x; D)])<sup>2</sup> + Var<sub>D</sub>[f(x; D)] + σ<sup>2</sup><br>Bias<sub>D</sub> = E<sub>D</sub>[f(x; D)] − F(x)   ·   Var<sub>D</sub> = E<sub>D</sub>[(E<sub>D</sub>[f(x; D)] − f(x; D))<sup>2</sup>]"),
+  e:["Forventet feil på et nytt punkt = bias² (systematisk bom, undertilpasning) + varians (sensitivitet for treningsutvalget, overtilpasning) + irredusibel støy σ². Mer kompleksitet gir lavere bias og høyere varians.","The expected error on a new point = bias² (systematic miss, underfitting) + variance (sensitivity to the training sample, overfitting) + irreducible noise σ². More complexity gives lower bias and higher variance."],
+  ex:["F = 167, snitt 165, Var = 3, σ² = 1: 2² + 3 + 1 = 8 cm².","F = 167, mean 165, Var = 3, σ² = 1: 2² + 3 + 1 = 8 cm²."]},
+ {id:"g-polyfeat", n:["Antall polynomfeatures","Number of polynomial features"],
+  f:["Antall monomer av grad ≤ p i d variabler = C(d + p, p) = (d + p)! / (d! · p!)", "Number of monomials of degree ≤ p in d variables = C(d + p, p) = (d + p)! / (d! · p!)"],
+  e:["Inkluderer konstantleddet og alle kryssledd (<code>PolynomialFeatures</code>). Graden p er en hyperparameter, og antallet vokser raskt med d og p.","Includes the constant term and all cross terms (<code>PolynomialFeatures</code>). The degree p is a hyperparameter, and the count grows quickly with d and p."],
+  ex:["d = 3, p = 2: C(5, 2) = 10 (1 + 3 + 3 kvadrater + 3 kryssledd).","d = 3, p = 2: C(5, 2) = 10 (1 + 3 + 3 squares + 3 cross terms)."]},
+ {id:"g-cv", n:["Kryssvalidering","Cross-validation"],
+  f:["k-fold: k tilpasninger, hver trent på n·(k − 1)/k og testet på n/k<br>LOOCV: n tilpasninger, hver trent på n − 1 og testet på 1","k-fold: k fits, each trained on n·(k − 1)/k and tested on n/k<br>LOOCV: n fits, each trained on n − 1 and tested on 1"],
+  e:["Hver del er test (validering) én gang, og estimatet er snittet av de k resultatene. LOOCV bruker dataene best, men er dyr. k-fold er en billigere mellomting.","Each part is the test (validation) set once, and the estimate is the mean of the k results. LOOCV uses the data best, but is expensive. k-fold is a cheaper compromise."],
+  ex:["n = 1000, k = 5: hver modell trenes på 800 og valideres på 200.","n = 1000, k = 5: each model is trained on 800 and validated on 200."]}
+]},
+// ===== 6 Neural networks =====
+{t:6, items:[
+ {id:"g-perceptron", n:["Perceptron","Perceptron"],
+  f:["f(x) = H(<b>w</b>·<b>x</b> + b), der H(z) = 1 hvis z ≥ 0, ellers 0<br>Læringsregel: w<sub>i</sub> ← w<sub>i</sub> + η (y − ŷ) x<sub>i</sub>   ·   b ← b + η (y − ŷ)","f(x) = H(<b>w</b>·<b>x</b> + b), where H(z) = 1 if z ≥ 0, else 0<br>Learning rule: w<sub>i</sub> ← w<sub>i</sub> + η (y − ŷ) x<sub>i</sub>   ·   b ← b + η (y − ŷ)"],
+  e:["Én node med stegfunksjon gir en lineær beslutningsgrense, så XOR er umulig. Vektene endres bare når prediksjonen er feil. Eksempler: AND = (1, 1, −1,5), OR = (1, 1, −0,5), NOT = (−1, 0,5).","A single unit with a step function gives a linear decision boundary, so XOR is impossible. The weights only change when the prediction is wrong. Examples: AND = (1, 1, −1.5), OR = (1, 1, −0.5), NOT = (−1, 0.5)."],
+  ex:["w = (0,2; −0,4), b = 0,1, x = (1, 1), y = 1, η = 0,5: z = −0,1 gir ŷ = 0, så w = (0,7; 0,1), b = 0,6.","w = (0.2, −0.4), b = 0.1, x = (1, 1), y = 1, η = 0.5: z = −0.1 gives ŷ = 0, so w = (0.7, 0.1), b = 0.6."]},
+ {id:"g-neuron", n:["Aktivering i en node","The activation of a unit"],
+  f:S("a<sub>j</sub> = g(" + SUM + "<sub>i</sub> w<sub>ij</sub> a<sub>i</sub> + b<sub>j</sub>)"),
+  e:["w<sub>ij</sub> er vekten fra node i i forrige lag til node j, og g er aktiveringsfunksjonen. Regn lag for lag (forward pass). Uten ikke-lineær g blir hele nettverket lineært.","w<sub>ij</sub> is the weight from unit i in the previous layer to unit j, and g is the activation function. Compute layer by layer (forward pass). Without a non-linear g the whole network is linear."],
+  ex:["w = [0,5; −1; 2], b = −0,5, x = [2, 1, 0,5], sigmoid: z = 0,5, a ≈ 0,62.","w = [0.5, −1, 2], b = −0.5, x = [2, 1, 0.5], sigmoid: z = 0.5, a ≈ 0.62."]},
+ {id:"g-activations", n:["Aktiveringsfunksjoner","Activation functions"],
+  f:["σ(x) = 1/(1 + e<sup>−x</sup>) · tanh(x) ∈ (−1, 1) · ReLU(x) = max(0, x) · leaky ReLU(x) = x hvis x > 0, ellers 0,1·x", "σ(x) = 1/(1 + e<sup>−x</sup>) · tanh(x) ∈ (−1, 1) · ReLU(x) = max(0, x) · leaky ReLU(x) = x if x > 0, else 0.1·x"],
+  e:["Sigmoid gir (0, 1) og passer i utgangen ved binær klassifisering. ReLU er standard i skjulte lag, billig og uten metning for x > 0, men kan gi «døde» noder. Stegfunksjonen har deriverte 0 og kan ikke trenes med backpropagation.","Sigmoid gives (0, 1) and suits the output for binary classification. ReLU is the default in hidden layers, cheap and without saturation for x > 0, but can give “dead” units. The step function has derivative 0 and cannot be trained with backpropagation."]},
+ {id:"g-softmax", n:["Softmax","Softmax"],
+  f:S("softmax(z)<sub>i</sub> = e<sup>z<sub>i</sub></sup> / " + SUM + "<sub>j</sub> e<sup>z<sub>j</sub></sup>"),
+  e:["Gjør logits om til en sannsynlighetsfordeling over klassene (positiv, summerer til 1). Brukes i utgangslaget ved flerklasse-klassifisering.","Turns logits into a probability distribution over the classes (positive, sums to 1). Used in the output layer for multi-class classification."],
+  ex:["z = [2, 1, 0]: e² / (e² + e + 1) ≈ 7,39/11,1 ≈ 0,67.","z = [2, 1, 0]: e² / (e² + e + 1) ≈ 7.39/11.1 ≈ 0.67."]},
+ {id:"g-ce-multi", n:["Cross-entropy for flere klasser","Cross-entropy for several classes"],
+  f:S("L(ŷ, y) = −" + SUM + "<sub>i</sub> y<sub>i</sub> log(ŷ<sub>i</sub>)"),
+  e:["Med one-hot-target teller bare den sanne klassen: L = −log ŷ<sub>sann</sub>. Det er kryss-entropien H(p, q) mellom datafordelingen p og modellens q.","With a one-hot target only the true class counts: L = −log ŷ<sub>true</sub>. It is the cross-entropy H(p, q) between the data distribution p and the model's q."],
+  ex:["ŷ = (0,1; 0,1; 0,8), y = (1, 0, 0): L = −ln 0,1 ≈ 2,30.","ŷ = (0.1, 0.1, 0.8), y = (1, 0, 0): L = −ln 0.1 ≈ 2.30."]},
+ {id:"g-params", n:["Antall parametre i et Dense-lag","Number of parameters in a Dense layer"],
+  f:["(n<sub>inn</sub> + 1) · n<sub>ut</sub>   (vekter + én bias per node); summer over alle lag", "(n<sub>in</sub> + 1) · n<sub>out</sub>   (weights + one bias per unit); sum over all layers"],
+  e:["Hver node har én vekt per input og én bias. Inputlaget har ingen parametre.","Each unit has one weight per input and one bias. The input layer has no parameters."],
+  ex:["8 → 16 → 4 → 1: 9·16 + 17·4 + 5·1 = 144 + 68 + 5 = 217.","8 → 16 → 4 → 1: 9·16 + 17·4 + 5·1 = 144 + 68 + 5 = 217."]},
+ {id:"g-sgd", n:["Epoker, batcher og iterasjoner","Epochs, batches and iterations"],
+  f:["Iterasjoner (vektoppdateringer) per epoke = ⌈N / batch_size⌉", "Iterations (weight updates) per epoch = ⌈N / batch_size⌉"],
+  e:["En epoke er én gjennomgang av alle treningsdataene. Stochastic/mini-batch gradient descent oppdaterer vektene én gang per batch. Den siste, ufullstendige batchen teller også.","An epoch is one pass over all the training data. Stochastic/mini-batch gradient descent updates the weights once per batch. The last, incomplete batch counts too."],
+  ex:["N = 10 000, batch 32: ⌈312,5⌉ = 313.","N = 10,000, batch 32: ⌈312.5⌉ = 313."]},
+ {id:"g-backprop", n:["Kjerneregelen (backpropagation)","The chain rule (backpropagation)"],
+  f:S("∂f/∂x = (∂f/∂u) · (∂u/∂x)   ·   ∂L/∂w = (∂L/∂a) · (∂a/∂z) · (∂z/∂w)"),
+  e:["Backpropagation beregner hvordan hver vekt påvirker tapet ved å bruke kjerneregelen bakover gjennom nettverket. Da trengs deriverbare aktiveringer og tap.","Backpropagation computes how each weight affects the loss by applying the chain rule backwards through the network. This needs differentiable activations and loss."]}
+]},
+// ===== 7 Clustering =====
+{t:7, items:[
+ {id:"g-euclid", n:["Euklidsk avstand","Euclidean distance"],
+  f:S("d(p, q) = √((p<sub>1</sub> − q<sub>1</sub>)<sup>2</sup> + (p<sub>2</sub> − q<sub>2</sub>)<sup>2</sup> + … + (p<sub>n</sub> − q<sub>n</sub>)<sup>2</sup>)"),
+  e:["Grunnlaget for k-means, DBSCAN og k-NN. Features med stort tallområde dominerer, så skaler først. I høye dimensjoner blir avstander mindre informative.","The basis of k-means, DBSCAN and k-NN. Features with a large range dominate, so scale first. In high dimensions distances become less informative."],
+  ex:["(30, 400) og (60, 410): √(900 + 100) ≈ 31,6.","(30, 400) and (60, 410): √(900 + 100) ≈ 31.6."]},
+ {id:"g-kmeans", n:["k-means: tilordning og oppdatering","k-means: assignment and update"],
+  f:["Tilordning: c(x) = arg min<sub>k</sub> d(x, μ<sub>k</sub>)   ·   Oppdatering: μ<sub>k</sub> = (1/|C<sub>k</sub>|) · " + SUM + "<sub>x∈C<sub>k</sub></sub> x", "Assignment: c(x) = arg min<sub>k</sub> d(x, μ<sub>k</sub>)   ·   Update: μ<sub>k</sub> = (1/|C<sub>k</sub>|) · " + SUM + "<sub>x∈C<sub>k</sub></sub> x"],
+  e:["Gjenta de to stegene til sentroidene ikke flytter seg. Resultatet avhenger av startpunktene (lokale minima), og k må velges på forhånd. Klyngene blir konvekse, og alle punkter tilordnes en klynge.","Repeat the two steps until the centroids stop moving. The result depends on the starting points (local minima), and k must be chosen in advance. The clusters are convex, and every point is assigned to a cluster."],
+  ex:["1D: 1, 2, 4, 8, 9, 10 med μ = 2 og 4: {1, 2} og {4, 8, 9, 10}, så nye μ = 1,5 og 7,75.","1D: 1, 2, 4, 8, 9, 10 with μ = 2 and 4: {1, 2} and {4, 8, 9, 10}, so new μ = 1.5 and 7.75."]},
+ {id:"g-inertia", n:["Inertia","Inertia"],
+  f:S("Inertia = " + SUM + "<sub>k</sub> " + SUM + "<sub>x∈C<sub>k</sub></sub> ‖x − μ<sub>k</sub>‖<sup>2</sup>"),
+  e:["Summen av kvadrerte avstander til egen sentroide. Lav er kompakt. Den minker alltid med flere klynger (k = n gir 0), så bruk albuen i inertia-plottet for å velge k.","The sum of squared distances to the cluster's own centroid. Low means compact. It always decreases with more clusters (k = n gives 0), so use the elbow in the inertia plot to choose k."],
+  ex:["(1, 2), (3, 4), (5, 9): μ = (3, 5), inertia = 13 + 1 + 20 = 34.","(1, 2), (3, 4), (5, 9): μ = (3, 5), inertia = 13 + 1 + 20 = 34."]},
+ {id:"g-silhouette", n:["Silhouette-koeffisient","Silhouette coefficient"],
+  f:S("s = (b − a) / max(a, b)"),
+  e:["a er midlere avstand innad i egen klynge, og b midlere avstand til nærmeste andre klynge. s ∈ [−1, 1]: nær 1 er godt plassert, rundt 0 på grensen, og negativ trolig feil klynge. Høyere snitt er bedre, så velg k med toppen.","a is the mean distance within the point's own cluster, and b the mean distance to the nearest other cluster. s ∈ [−1, 1]: close to 1 is well placed, around 0 on the border, and negative probably the wrong cluster. A higher mean is better, so pick the k at the peak."],
+  ex:["a = 2, b = 5: s = 3/5 = 0,6.","a = 2, b = 5: s = 3/5 = 0.6."]},
+ {id:"g-dbscan", n:["DBSCAN","DBSCAN"],
+  f:["N<sub>ε</sub>(p) = {q : d(p, q) ≤ ε}   (p selv er med)<br>Kjernepunkt: |N<sub>ε</sub>(p)| ≥ minPts · Kantpunkt: ikke kjerne, men innenfor ε av et kjernepunkt · Støy: resten","N<sub>ε</sub>(p) = {q : d(p, q) ≤ ε}   (p itself included)<br>Core point: |N<sub>ε</sub>(p)| ≥ minPts · Border point: not core, but within ε of a core point · Noise: the rest"],
+  e:["Klynger vokser fra kjernepunkt til kjernepunkt, så formen kan være vilkårlig (måner, ringer). Antall klynger kommer ut av dataene, og støy får label −1. Avhenger sterkt av ε: for liten gir mye støy, for stor slår klynger sammen.","Clusters grow from core point to core point, so they can take any shape (moons, rings). The number of clusters comes out of the data, and noise gets the label −1. It depends strongly on ε: too small gives a lot of noise, too large merges clusters."],
+  ex:["1D: 1, 2, 2,5, 3, 7, 8, 15, ε = 1, minPts = 3: kjernepunkter 2, 2,5 og 3. 1 er kantpunkt, og 7, 8 og 15 er støy.","1D: 1, 2, 2.5, 3, 7, 8, 15, ε = 1, minPts = 3: core points 2, 2.5 and 3. 1 is a border point, and 7, 8 and 15 are noise."]}
+]},
+// ===== 8 Dimensionality reduction & anomalies =====
+{t:8, items:[
+ {id:"g-cov", n:["Kovarians og kovariansmatrise","Covariance and the covariance matrix"],
+  f:S("cov(x<sub>i</sub>, x<sub>j</sub>) = (1/(N − 1)) · " + SUM + "<sub>k=1</sub><sup>N</sup> (x<sub>i,k</sub> − x̄<sub>i</sub>)(x<sub>j,k</sub> − x̄<sub>j</sub>)   ·   S<sub>ij</sub> = cov(x<sub>i</sub>, x<sub>j</sub>)"),
+  e:["Diagonalen i S er variansene, og resten er kovariansene. S er symmetrisk. Sentrer dataene (trekk fra snittet) før PCA. Notatene deler på N − 1.","The diagonal of S holds the variances, and the rest are covariances. S is symmetric. Centre the data (subtract the mean) before PCA. The notes divide by N − 1."],
+  ex:["x<sub>1</sub> = (1, 2, 3), x<sub>2</sub> = (2, 1, 0): cov = (−1 + 0 − 1)/2 = −1.","x<sub>1</sub> = (1, 2, 3), x<sub>2</sub> = (2, 1, 0): cov = (−1 + 0 − 1)/2 = −1."]},
+ {id:"g-eigen", n:["Egenverdier og egenvektorer","Eigenvalues and eigenvectors"],
+  f:["det(S − λI) = 0 gir λ   ·   S<b>v</b> = λ<b>v</b> gir <b>v</b>   ·   " + SUM + " λ = spor(S)", "det(S − λI) = 0 gives λ   ·   S<b>v</b> = λ<b>v</b> gives <b>v</b>   ·   " + SUM + " λ = trace(S)"],
+  e:["Hovedkomponentene er egenvektorene til S, sortert etter egenverdi. λ er variansen langs komponenten. Komponentene er ortogonale. Normer egenvektorene til lengde 1.","The principal components are the eigenvectors of S, sorted by eigenvalue. λ is the variance along the component. The components are orthogonal. Normalise the eigenvectors to length 1."],
+  ex:["S = [[2, 1], [1, 2]]: λ = 3 og 1, PC1 = (1/√2)(1, 1).","S = [[2, 1], [1, 2]]: λ = 3 and 1, PC1 = (1/√2)(1, 1)."]},
+ {id:"g-explvar", n:["Forklart varians","Explained variance"],
+  f:["Andel for PC<sub>k</sub> = λ<sub>k</sub> / " + SUM + "<sub>j</sub> λ<sub>j</sub>   ·   kumulativ for de k første = (λ<sub>1</sub> + … + λ<sub>k</sub>) / " + SUM + "<sub>j</sub> λ<sub>j</sub>", "Share for PC<sub>k</sub> = λ<sub>k</sub> / " + SUM + "<sub>j</sub> λ<sub>j</sub>   ·   cumulative for the first k = (λ<sub>1</sub> + … + λ<sub>k</sub>) / " + SUM + "<sub>j</sub> λ<sub>j</sub>"],
+  e:["Velg det minste antallet komponenter som når ønsket andel (f.eks. 90 %), eller se etter knekken i scree-plottet. Del egenverdiene på summen før du leser av andeler. Mest varians er ikke alltid mest nyttig for klassifisering.","Choose the smallest number of components that reaches the desired share (e.g. 90 %), or look for the bend in the scree plot. Divide the eigenvalues by their sum before reading off shares. Most variance is not always most useful for classification."],
+  ex:["λ = 4, 2, 1, 0,5, 0,5: de to første forklarer 6/8 = 75 %.","λ = 4, 2, 1, 0.5, 0.5: the first two explain 6/8 = 75 %."]},
+ {id:"g-project", n:["Projeksjon og rekonstruksjon","Projection and reconstruction"],
+  f:["z<sub>k</sub> = <b>e</b><sub>k</sub>ᵀ (<b>x</b> − <b>x̄</b>)   ·   <b>x̂</b> = <b>x̄</b> + " + SUM + "<sub>k</sub> z<sub>k</sub> <b>e</b><sub>k</sub><br>Rekonstruksjonsfeil = ‖<b>x</b> − <b>x̂</b>‖<sup>2</sup>","z<sub>k</sub> = <b>e</b><sub>k</sub>ᵀ (<b>x</b> − <b>x̄</b>)   ·   <b>x̂</b> = <b>x̄</b> + " + SUM + "<sub>k</sub> z<sub>k</sub> <b>e</b><sub>k</sub><br>Reconstruction error = ‖<b>x</b> − <b>x̂</b>‖<sup>2</sup>"],
+  e:["z er de nye koordinatene (features) etter PCA. Med færre komponenter enn features mister du informasjon. Høy rekonstruksjonsfeil (PCA eller autoencoder) tyder på et uvanlig punkt, og kan brukes til anomalideteksjon.","z are the new coordinates (features) after PCA. With fewer components than features you lose information. A high reconstruction error (PCA or autoencoder) suggests an unusual point, and can be used for anomaly detection."],
+  ex:["x − x̄ = (3, 1), e<sub>1</sub> = (1/√2)(1, 1): z<sub>1</sub> ≈ 2,83, x̂ − x̄ = (2, 2), feil = 2.","x − x̄ = (3, 1), e<sub>1</sub> = (1/√2)(1, 1): z<sub>1</sub> ≈ 2.83, x̂ − x̄ = (2, 2), error = 2."]},
+ {id:"g-tsne", n:["t-SNE (ingen formel å regne)","t-SNE (no formula to compute)"],
+  f:["Bevarer <i>lokale</i> naboskap · ingen gjenbrukbar projeksjon · <code>fit_transform</code> på nytt for nye data","Preserves <i>local</i> neighbourhoods · no reusable projection · <code>fit_transform</code> again for new data"],
+  e:["t-SNE optimerer plasseringen av punktene direkte i 2D/3D i stedet for å lære en transformasjon. Avstander mellom klynger og klyngestørrelser i plottet betyr lite. Bruk det til visualisering, ikke som features.","t-SNE optimises the positions of the points directly in 2D/3D instead of learning a transform. Distances between clusters and cluster sizes in the plot mean little. Use it for visualisation, not as features."]},
+ {id:"g-anomaly", n:["Anomalideteksjon","Anomaly detection"],
+  f:["Isolation Forest: antall flagget ≈ contamination · n; kort snittlig stilengde = anomali<br>k-means: skår = min<sub>k</sub> ‖x − μ<sub>k</sub>‖ over en terskel · DBSCAN: støypunkter (−1)","Isolation Forest: number flagged ≈ contamination · n; short mean path length = anomaly<br>k-means: score = min<sub>k</sub> ‖x − μ<sub>k</sub>‖ above a threshold · DBSCAN: noise points (−1)"],
+  e:["Anomalier er få og annerledes, så de isoleres med få tilfeldige splitter. contamination er din antakelse om andelen anomalier og bestemmer terskelen.","Anomalies are few and different, so they are isolated with few random splits. contamination is your assumption about the share of anomalies and sets the threshold."],
+  ex:["n = 1500, contamination = 0,02: ≈ 30 punkter flagges.","n = 1500, contamination = 0.02: ≈ 30 points are flagged."]}
+]},
+// ===== 9 Reinforcement learning =====
+{t:9, items:[
+ {id:"g-return", n:["Diskontert retur","Discounted return"],
+  f:S("G<sub>t</sub> = R<sub>t+1</sub> + γR<sub>t+2</sub> + γ<sup>2</sup>R<sub>t+3</sub> + … = " + SUM + "<sub>k≥0</sub> γ<sup>k</sup> R<sub>t+k+1</sub>   ·   " + SUM + "<sub>k≥0</sub> γ<sup>k</sup> = 1/(1 − γ)"),
+  e:["En belønning k steg frem vektes med γ<sup>k</sup>, og den første (R<sub>t+1</sub>) har vekt 1. Liten γ gir en kortsiktig agent, stor γ en langsiktig. Med γ < 1 blir en uendelig sum endelig.","A reward k steps ahead is weighted by γ<sup>k</sup>, and the first one (R<sub>t+1</sub>) has weight 1. A small γ gives a short-sighted agent, a large γ a far-sighted one. With γ < 1 an infinite sum becomes finite."],
+  ex:["R = 1, 0, 2 og γ = 0,9: 1 + 0 + 0,81·2 = 2,62. Konstant R = 2, γ = 0,95: 2/0,05 = 40.","R = 1, 0, 2 and γ = 0.9: 1 + 0 + 0.81·2 = 2.62. Constant R = 2, γ = 0.95: 2/0.05 = 40."]},
+ {id:"g-qlearning", n:["Q-learning (Bellman-oppdatering)","Q-learning (Bellman update)"],
+  f:S("Q<sub>new</sub>(S<sub>t</sub>, A<sub>t</sub>) ← (1 − α) · Q(S<sub>t</sub>, A<sub>t</sub>) + α · (R<sub>t+1</sub> + γ · max<sub>A</sub> Q(S<sub>t+1</sub>, A))"),
+  e:["α er læringsraten: α = 0 lærer ingenting og α = 1 glemmer den gamle verdien. γ er diskonteringsfaktoren. Målet R + γ·max Q bruker den beste handlingen i neste tilstand.","α is the learning rate: α = 0 learns nothing and α = 1 forgets the old value. γ is the discount factor. The target R + γ·max Q uses the best action in the next state."],
+  ex:["Q = 1, α = 0,1, R = −1, γ = 0,95, max Q′ = 6: 0,9 + 0,1·4,7 = 1,37.","Q = 1, α = 0.1, R = −1, γ = 0.95, max Q′ = 6: 0.9 + 0.1·4.7 = 1.37."]},
+ {id:"g-vq", n:["Verdi og Q-verdi (deterministisk)","Value and Q-value (deterministic)"],
+  f:S("V(s) = max<sub>a</sub> Q(s, a)   ·   Q(s, a) = R(s, a) + γ · V(s′)   ·   π(s) = arg max<sub>a</sub> Q(s, a)"),
+  e:["s′ er tilstanden handlingen a fører til. En terminal tilstand (hull eller mål) har ingen fremtid, så Q = bare belønningen. Den grådige policyen velger handlingen med størst Q.","s′ is the state that action a leads to. A terminal state (hole or goal) has no future, so Q = just the reward. The greedy policy picks the action with the largest Q."],
+  ex:["Frozen Lake, γ = 0,9, 6 steg til 🎁: V(start) = 0,9<sup>5</sup> ≈ 0,59.","Frozen Lake, γ = 0.9, 6 steps to 🎁: V(start) = 0.9<sup>5</sup> ≈ 0.59."]},
+ {id:"g-egreedy", n:["ε-greedy","ε-greedy"],
+  f:["P(grådig) = (1 − ε) + ε/|A|   ·   P(annen handling) = ε/|A|   (tilfeldig valg blant alle |A|)", "P(greedy) = (1 − ε) + ε/|A|   ·   P(other action) = ε/|A|   (random pick among all |A|)"],
+  e:["Med sannsynlighet ε utforsker agenten (tilfeldig handling), ellers utnytter den (argmax Q). Det tilfeldige valget kan også treffe den grådige handlingen.","With probability ε the agent explores (random action), otherwise it exploits (argmax Q). The random pick can also land on the greedy action."],
+  ex:["ε = 0,2, 4 handlinger: P(grådig) = 0,8 + 0,05 = 0,85.","ε = 0.2, 4 actions: P(greedy) = 0.8 + 0.05 = 0.85."]},
+ {id:"g-edecay", n:["Epsilon decay","Epsilon decay"],
+  f:S("ε ← max(ε<sub>min</sub>, ε · decay)   ⇒   ε<sub>n</sub> = max(ε<sub>min</sub>, ε<sub>0</sub> · decay<sup>n</sup>)   ·   n = ln(ε<sub>min</sub>/ε<sub>0</sub>) / ln(decay)"),
+  e:["Høy ε tidlig (mye utforsking) og lav ε senere (utnytt det som er lært). Geometrisk decay er ikke det samme som å trekke fra en fast verdi.","A high ε early (much exploration) and a low ε later (exploit what has been learned). Geometric decay is not the same as subtracting a fixed amount."],
+  ex:["ε<sub>0</sub> = 1, decay = 0,99: ε<sub>100</sub> ≈ 0,37, og ε<sub>min</sub> = 0,05 nås etter ≈ 298 episoder.","ε<sub>0</sub> = 1, decay = 0.99: ε<sub>100</sub> ≈ 0.37, and ε<sub>min</sub> = 0.05 is reached after ≈ 298 episodes."]},
+ {id:"g-dqn", n:["Deep Q-learning (DQN)","Deep Q-learning (DQN)"],
+  f:["y = R + γ · max<sub>a′</sub> Q<sub>target</sub>(S′, a′)   (y = R hvis terminal)   ·   Loss = (y − Q(S, A))<sup>2</sup>", "y = R + γ · max<sub>a′</sub> Q<sub>target</sub>(S′, a′)   (y = R if terminal)   ·   Loss = (y − Q(S, A))<sup>2</sup>"],
+  e:["Et nevralt nett erstatter Q-tabellen. Target network (oppdateres sjeldnere) gir et stabilt mål, og en replay buffer gir mindre korrelerte treningsdata. Lossen er MSE, og den backpropageres gjennom Q-nettet.","A neural network replaces the Q table. The target network (updated less often) gives a stable target, and a replay buffer gives less correlated training data. The loss is MSE, and it is backpropagated through the Q network."],
+  ex:["R = 0, γ = 0,9, max Q<sub>target</sub> = 0,5, Q = 0,3: y = 0,45, loss = 0,0225.","R = 0, γ = 0.9, max Q<sub>target</sub> = 0.5, Q = 0.3: y = 0.45, loss = 0.0225."]}
+]},
+// ===== 10 XAI =====
+{t:10, items:[
+ {id:"g-shapley", n:["Shapley-verdi","Shapley value"],
+  f:S("φ<sub>i</sub> = " + SUM + "<sub>S ⊆ N∖{i}</sub> <sup>|S|!·(n − |S| − 1)!</sup>⁄<sub>n!</sub> · [v(S ∪ {i}) − v(S)]"),
+  e:["Snittet av spiller i sitt marginale bidrag over alle rekkefølger spillerne kan ankomme i. v er den karakteristiske funksjonen (verdien av en koalisjon). Egenskaper: efficiency, symmetry, dummy og additivity.","The mean of player i's marginal contribution over all orders in which the players can arrive. v is the characteristic function (the value of a coalition). Properties: efficiency, symmetry, dummy and additivity."],
+  ex:["v(A) = 10, v(B) = 20, v(AB) = 40: φ<sub>A</sub> = ½(10 − 0) + ½(40 − 20) = 15.","v(A) = 10, v(B) = 20, v(AB) = 40: φ<sub>A</sub> = ½(10 − 0) + ½(40 − 20) = 15."]},
+ {id:"g-shap-eff", n:["SHAP: lokal nøyaktighet","SHAP: local accuracy"],
+  f:S("f(x) = φ<sub>0</sub> + " + SUM + "<sub>i</sub> φ<sub>i</sub>,   φ<sub>0</sub> = E[f(x)]"),
+  e:["SHAP-verdiene for én prediksjon summerer til avviket fra basisverdien (snittprediksjonen). Det er dette waterfall-plottet viser. Global viktighet er snittet av |φ<sub>i</sub>| over mange punkter.","The SHAP values for one prediction sum to the difference from the base value (the mean prediction). This is what the waterfall plot shows. Global importance is the mean of |φ<sub>i</sub>| over many points."],
+  ex:["φ<sub>0</sub> = 0,30, f(x) = 0,72, φ<sub>Age</sub> = 0,10, φ<sub>Fare</sub> = −0,05: φ<sub>Sex</sub> = 0,37.","φ<sub>0</sub> = 0.30, f(x) = 0.72, φ<sub>Age</sub> = 0.10, φ<sub>Fare</sub> = −0.05: φ<sub>Sex</sub> = 0.37."]},
+ {id:"g-coalitions", n:["Antall koalisjoner","Number of coalitions"],
+  f:["Antall delmengder av n spillere = 2<sup>n</sup>", "Number of subsets of n players = 2<sup>n</sup>"],
+  e:["En eksakt Shapley-beregning må i prinsippet evaluere v for alle koalisjoner. Derfor bruker SHAP tilnærminger (sampling, KernelSHAP, TreeSHAP). I Image SHAP er superpikslene spillerne.","An exact Shapley computation must in principle evaluate v for every coalition. That is why SHAP uses approximations (sampling, KernelSHAP, TreeSHAP). In Image SHAP the superpixels are the players."],
+  ex:["20 superpiksler: 2<sup>20</sup> = 1 048 576 koalisjoner.","20 superpixels: 2<sup>20</sup> = 1,048,576 coalitions."]},
+ {id:"g-tcav", n:["TCAV-skår","TCAV score"],
+  f:S("TCAV<sub>C,k,l</sub> = |{x ∈ X<sub>k</sub> : S<sub>C,k,l</sub>(x) > 0}| / |X<sub>k</sub>|"),
+  e:["Andelen bilder av klasse k der en bevegelse i retning av konseptet C (konseptvektoren, CAV) i lag l øker skåren for k. Et globalt, modellspesifikt mål på hvor viktig et menneskelig konsept er.","The share of images of class k where moving in the direction of concept C (the concept vector, CAV) in layer l increases the score for k. A global, model-specific measure of how important a human concept is."],
+  ex:["112 av 160 sebrabilder har S > 0: TCAV = 0,70.","112 of 160 zebra images have S > 0: TCAV = 0.70."]}
+]},
+// ===== 11 AI Act =====
+{t:11, items:[
+ {id:"g-fines", n:["Bøter (Artikkel 99)","Fines (Article 99)"],
+  f:["Forbudt praksis (Art. 5): inntil max(€35 mill., 7 % av global årsomsetning)<br>De fleste andre brudd: inntil max(€15 mill., 3 %)","Prohibited practices (Art. 5): up to max(€35M, 7 % of global annual turnover)<br>Most other breaches: up to max(€15M, 3 %)"],
+  e:["Det <b>høyeste</b> av det faste beløpet og prosentandelen gjelder. Regn ut begge og velg det største.","The <b>higher</b> of the fixed amount and the percentage applies. Compute both and take the larger."],
+  ex:["Omsetning €2 mrd., forbud: 7 % = €140 mill. > €35 mill. Omsetning €300 mill., høyrisiko: 3 % = €9 mill. < €15 mill., så €15 mill.","Turnover €2bn, prohibition: 7 % = €140M > €35M. Turnover €300M, high-risk: 3 % = €9M < €15M, so €15M."]},
+ {id:"g-gpai", n:["GPAI og systemisk risiko (Artikkel 51)","GPAI and systemic risk (Article 51)"],
+  f:["Treningsberegning: C ≈ 6 · N · D FLOP   (N = parametre, D = treningstokens)<br>C > 10<sup>25</sup> FLOP ⇒ antatt systemisk risiko","Training compute: C ≈ 6 · N · D FLOP   (N = parameters, D = training tokens)<br>C > 10<sup>25</sup> FLOP ⇒ presumed systemic risk"],
+  e:["Over terskelen antas en GPAI-modell å ha systemisk risiko, med ekstra plikter. Kommisjonen kan også utpeke modeller under terskelen (Anneks 13). Høy beregning gjør ikke en modell til et høyrisikosystem; det er en annen kategori.","Above the threshold a GPAI model is presumed to have systemic risk, with extra obligations. The Commission can also designate models below the threshold (Annex 13). High compute does not make a model a high-risk system; that is a different category."],
+  ex:["N = 7·10<sup>10</sup>, D = 1,5·10<sup>13</sup>: C ≈ 6,3·10<sup>24</sup> < 10<sup>25</sup>.","N = 7·10<sup>10</sup>, D = 1.5·10<sup>13</sup>: C ≈ 6.3·10<sup>24</sup> < 10<sup>25</sup>."]},
+ {id:"g-dates", n:["Datoer og måneder","Dates and months"],
+  f:["Måneder mellom to datoer (samme dag i måneden) = 12 · Δår + Δmåned<br>Ikrafttredelse 1. august 2024","Months between two dates (same day of month) = 12 · Δyears + Δmonths<br>Entry into force 1 August 2024"],
+  e:["Opprinnelig innfasing etter ikrafttredelse: forbud 6 mnd. → GPAI 12 mnd. → hoveddelen 24 mnd. (2. aug. 2026) → Anneks 1-høyrisiko 36 mnd. Digital Omnibus (2026) utsatte høyrisikokravene til 2. des. 2027 (Anneks 3) og 2. aug. 2028 (Anneks 1).","Original phase-in after entry into force: prohibitions 6 months → GPAI 12 months → main part 24 months (2 Aug 2026) → Annex 1 high risk 36 months. The Digital Omnibus (2026) postponed the high-risk requirements to 2 Dec 2027 (Annex 3) and 2 Aug 2028 (Annex 1)."],
+  ex:["2. aug. 2026 → 2. des. 2027: 12·1 + 4 = 16 måneder.","2 Aug 2026 → 2 Dec 2027: 12·1 + 4 = 16 months."]}
+]}
+];
+})();
+
 // ---- fix1.js ----
 // Plan v3 audit fixes for q1.js / q1b.js / x1.js: questions referring to a plot without a fig.
 Object.assign(FIX, {
@@ -4362,6 +4729,7 @@ const I18N = {
     prev:"← Forrige", fwd:"Neste →", backCur:"Tilbake til nåværende ⤴", lock:"Lås svar ✓", nextQ:"Neste →", clear:"Fjern svar", flag:"🚩 Flagg", unflag:"🚩 Fjern flagg",
     submit:"Lever ✓", confirmSubmit:"Du har {n} ubesvarte spørsmål (gir 0 poeng). Trykk «Lever» igjen for å levere.", timeUp:"⏰ Tiden er ute – eksamen levert automatisk.",
     reset:"🗑️ Nullstill fremgang", resetConfirm:"Trykk igjen for å bekrefte nullstilling",
+    guide:"🧭 Navigasjonsguide", guideIntro:"Alle formlene i kurset, med forklaring av hvert symbol, når du bruker formelen og typiske feil. Bruk søket eller hopp til en planet.", guideSearch:"Søk etter formel …", guideNone:"Ingen formler passer søket.", practicePlanet:"🧪 Øv på planeten", example:"Eksempel", formulasN:"formler",
     footer:"Gradient Galaxy · lokal treningsapp · fremgangen lagres bare i denne nettleseren",
     best:"Beste oppdrag", missions:"Oppdrag fløyet", answered:"Besvart", coverage:"Unike oppgaver sett", accuracy:"Treffprosent", exams:"Eksamener",
     level:"Galakse-nivå", nextLevel:"poeng til neste nivå",
@@ -4398,6 +4766,7 @@ const I18N = {
     prev:"← Previous", fwd:"Next →", backCur:"Back to current ⤴", lock:"Lock answer ✓", nextQ:"Next →", clear:"Clear answer", flag:"🚩 Flag", unflag:"🚩 Unflag",
     submit:"Submit ✓", confirmSubmit:"You have {n} unanswered questions (worth 0). Press “Submit” again to hand in.", timeUp:"⏰ Time is up – the exam was submitted automatically.",
     reset:"🗑️ Reset progress", resetConfirm:"Click again to confirm reset",
+    guide:"🧭 Navigation guide", guideIntro:"Every formula in the course, with what each symbol means, when to use it and the typical mistakes. Use the search or jump to a planet.", guideSearch:"Search formulas …", guideNone:"No formulas match the search.", practicePlanet:"🧪 Practise this planet", example:"Example", formulasN:"formulas",
     footer:"Gradient Galaxy · local practice app · progress is stored only in this browser",
     best:"Best mission", missions:"Missions flown", answered:"Answered", coverage:"Unique questions seen", accuracy:"Accuracy", exams:"Exams",
     level:"Galaxy level", nextLevel:"points to next level",
@@ -5418,12 +5787,29 @@ function renderLog(){
   Sky.set("home", {});
 }
 
+/* ================= NAVIGATION GUIDE ================= */
+const plain = h => String(h ?? "").replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/g, " ").toLowerCase();
+function renderGuide(){
+  const qv = ($("#guideSearch").value || "").trim().toLowerCase();
+  $("#guideSearch").placeholder = T("guideSearch");
+  const match = it => !qv || [it.n, it.f, it.e, it.ex].some(p => p && (plain(p[0]).includes(qv) || plain(p[1]).includes(qv)));
+  const blocks = GUIDE.map(g => ({g, items: g.items.filter(match)})).filter(b => b.items.length);
+  $("#guideChips").innerHTML = GUIDE.map(g => { const tp = TOPICS[g.t], n = blocks.find(b => b.g === g)?.items.length || 0;
+    return `<button class="pill" data-gt="${g.t}" ${n ? "" : "disabled style=\"opacity:.45\""}>${tp.emoji} ${esc(tp.planet)} <span style="color:var(--muted)">${n}</span></button>`; }).join("");
+  $("#guideBody").innerHTML = blocks.length ? blocks.map(({g, items}) => `<div class="gtopic" id="gt-${g.t}"><div class="gtopic-h">${topicBadge(g.t)}<button class="ghost" data-gp="${g.t}">${T("practicePlanet")}</button></div><div class="guide-grid">` +
+    items.map(it => `<div class="gcard"><h4>${tx(it.n)}</h4><div class="formula">${tx(it.f)}</div><div class="gexp">${tx(it.e)}</div>${it.ex ? `<details><summary>${T("example")}</summary><div>${tx(it.ex)}</div></details>` : ""}</div>`).join("") +
+    `</div></div>`).join("") : `<p class="hint">${T("guideNone")}</p>`;
+  document.querySelectorAll("#guideChips [data-gt]").forEach(b => b.onclick = () => document.getElementById("gt-" + b.dataset.gt)?.scrollIntoView({behavior:"smooth", block:"start"}));
+  document.querySelectorAll("#guideBody [data-gp]").forEach(b => b.onclick = () => startPractice(+b.dataset.gp));
+  Sky.set("home", {});
+}
+
 /* ================= WIRING ================= */
 function goHome(){ clearInterval(examTick); if(E && !E.done) persistExam(); E = null; M = null; renderHome(); show("home"); }
 function rerender(){
   applyI18n();
   const act = activeScreen();
-  if(act==="home") renderHome(); else if(act==="log") renderLog();
+  if(act==="home") renderHome(); else if(act==="log") renderLog(); else if(act==="guide") renderGuide();
   else if(act==="play" && M) renderPractice(); else if(act==="exam" && E) renderExam();
   else if(act==="result"){ /* keep; language applies on next render */ }
 }
@@ -5439,6 +5825,8 @@ function init(){
   $("#homeBtn").onclick=goHome; $("#toMapBtn").onclick=goHome;
   $("#launchBtn").onclick=()=> S.mode==="exam" ? startExam() : startPractice();
   $("#logBtn").onclick=()=>{ renderLog(); show("log"); };
+  $("#guideBtn").onclick=()=>{ $("#guideSearch").value=""; renderGuide(); show("guide"); };
+  $("#guideSearch").oninput=()=>renderGuide();
   $("#examOnly").onchange=e=>{ S.examOnly=e.target.checked; save(); renderHome(); };
   $("#skipBtn").onclick=()=>{ if(M && M.view===M.i && !answeredCur()) commitPractice(null); };
   $("#lockBtn").onclick=lockPractice;

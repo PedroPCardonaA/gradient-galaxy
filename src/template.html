@@ -197,6 +197,22 @@ table.log{width:100%;border-collapse:collapse;font-size:14px}
 table.log th,table.log td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left}
 table.log td.n,table.log th.n{text-align:right;white-space:nowrap}
 footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
+.guide-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.gsearch{font:inherit;font-size:15px;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--opt);color:var(--text);width:min(320px,100%)}
+.gsearch:focus{outline:none;border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.chips .pill{font-size:13px}
+.gtopic{margin-top:18px;scroll-margin-top:12px}
+.gtopic-h{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.gtopic-h .badge{font-size:14px;padding:5px 12px}
+.guide-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.gcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 14px;min-width:0}
+.gcard h4{margin:0 0 8px;font-size:15px}
+.gcard .formula{margin-bottom:8px}
+.gcard .gexp{font-size:14px;line-height:1.55;color:var(--text)}
+.gcard details{margin-top:8px;font-size:14px}
+.gcard details summary{cursor:pointer;color:var(--accent)}
+.gcard details div{margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--opt)}
 @media (max-width:700px){
   .hero{grid-template-columns:1fr}
   .qtext{font-size:16px}
@@ -204,6 +220,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
   .brand h1{font-size:20px}
   .score{min-width:auto}
   .opts.tfopts{grid-template-columns:1fr 1fr}
+  .guide-grid{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 .numwrap{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -273,6 +290,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
         <div class="row" style="margin-top:12px">
           <button class="big" id="launchBtn"></button>
           <button class="ghost" id="logBtn" data-i="log"></button>
+          <button class="ghost" id="guideBtn" data-i="guide"></button>
         </div>
         <div id="resumeBox"></div>
         <label class="toggle" style="margin-top:12px"><input type="checkbox" id="examOnly"><span data-i="examOnly"></span></label>
@@ -361,6 +379,18 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
       </div>
     </div>
   </section>
+  <!-- NAVIGATION GUIDE -->
+  <section id="guide" class="screen">
+    <div class="panel">
+      <div class="guide-head">
+        <h2 data-i="guide" style="margin:0"></h2>
+        <input class="gsearch" id="guideSearch" type="search" autocomplete="off">
+      </div>
+      <p class="hint" data-i="guideIntro"></p>
+      <div class="chips" id="guideChips"></div>
+      <div id="guideBody"></div>
+    </div>
+  </section>
   <footer data-i="footer"></footer>
 </div>
 <div id="printReport"></div>
@@ -411,6 +441,7 @@ const I18N = {
     prev:"← Forrige", fwd:"Neste →", backCur:"Tilbake til nåværende ⤴", lock:"Lås svar ✓", nextQ:"Neste →", clear:"Fjern svar", flag:"🚩 Flagg", unflag:"🚩 Fjern flagg",
     submit:"Lever ✓", confirmSubmit:"Du har {n} ubesvarte spørsmål (gir 0 poeng). Trykk «Lever» igjen for å levere.", timeUp:"⏰ Tiden er ute – eksamen levert automatisk.",
     reset:"🗑️ Nullstill fremgang", resetConfirm:"Trykk igjen for å bekrefte nullstilling",
+    guide:"🧭 Navigasjonsguide", guideIntro:"Alle formlene i kurset, med forklaring av hvert symbol, når du bruker formelen og typiske feil. Bruk søket eller hopp til en planet.", guideSearch:"Søk etter formel …", guideNone:"Ingen formler passer søket.", practicePlanet:"🧪 Øv på planeten", example:"Eksempel", formulasN:"formler",
     footer:"Gradient Galaxy · lokal treningsapp · fremgangen lagres bare i denne nettleseren",
     best:"Beste oppdrag", missions:"Oppdrag fløyet", answered:"Besvart", coverage:"Unike oppgaver sett", accuracy:"Treffprosent", exams:"Eksamener",
     level:"Galakse-nivå", nextLevel:"poeng til neste nivå",
@@ -447,6 +478,7 @@ const I18N = {
     prev:"← Previous", fwd:"Next →", backCur:"Back to current ⤴", lock:"Lock answer ✓", nextQ:"Next →", clear:"Clear answer", flag:"🚩 Flag", unflag:"🚩 Unflag",
     submit:"Submit ✓", confirmSubmit:"You have {n} unanswered questions (worth 0). Press “Submit” again to hand in.", timeUp:"⏰ Time is up – the exam was submitted automatically.",
     reset:"🗑️ Reset progress", resetConfirm:"Click again to confirm reset",
+    guide:"🧭 Navigation guide", guideIntro:"Every formula in the course, with what each symbol means, when to use it and the typical mistakes. Use the search or jump to a planet.", guideSearch:"Search formulas …", guideNone:"No formulas match the search.", practicePlanet:"🧪 Practise this planet", example:"Example", formulasN:"formulas",
     footer:"Gradient Galaxy · local practice app · progress is stored only in this browser",
     best:"Best mission", missions:"Missions flown", answered:"Answered", coverage:"Unique questions seen", accuracy:"Accuracy", exams:"Exams",
     level:"Galaxy level", nextLevel:"points to next level",
@@ -1127,12 +1159,29 @@ function renderLog(){
   Sky.set("home", {});
 }
 
+/* ================= NAVIGATION GUIDE ================= */
+const plain = h => String(h ?? "").replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/g, " ").toLowerCase();
+function renderGuide(){
+  const qv = ($("#guideSearch").value || "").trim().toLowerCase();
+  $("#guideSearch").placeholder = T("guideSearch");
+  const match = it => !qv || [it.n, it.f, it.e, it.ex].some(p => p && (plain(p[0]).includes(qv) || plain(p[1]).includes(qv)));
+  const blocks = GUIDE.map(g => ({g, items: g.items.filter(match)})).filter(b => b.items.length);
+  $("#guideChips").innerHTML = GUIDE.map(g => { const tp = TOPICS[g.t], n = blocks.find(b => b.g === g)?.items.length || 0;
+    return `<button class="pill" data-gt="${g.t}" ${n ? "" : "disabled style=\"opacity:.45\""}>${tp.emoji} ${esc(tp.planet)} <span style="color:var(--muted)">${n}</span></button>`; }).join("");
+  $("#guideBody").innerHTML = blocks.length ? blocks.map(({g, items}) => `<div class="gtopic" id="gt-${g.t}"><div class="gtopic-h">${topicBadge(g.t)}<button class="ghost" data-gp="${g.t}">${T("practicePlanet")}</button></div><div class="guide-grid">` +
+    items.map(it => `<div class="gcard"><h4>${tx(it.n)}</h4><div class="formula">${tx(it.f)}</div><div class="gexp">${tx(it.e)}</div>${it.ex ? `<details><summary>${T("example")}</summary><div>${tx(it.ex)}</div></details>` : ""}</div>`).join("") +
+    `</div></div>`).join("") : `<p class="hint">${T("guideNone")}</p>`;
+  document.querySelectorAll("#guideChips [data-gt]").forEach(b => b.onclick = () => document.getElementById("gt-" + b.dataset.gt)?.scrollIntoView({behavior:"smooth", block:"start"}));
+  document.querySelectorAll("#guideBody [data-gp]").forEach(b => b.onclick = () => startPractice(+b.dataset.gp));
+  Sky.set("home", {});
+}
+
 /* ================= WIRING ================= */
 function goHome(){ clearInterval(examTick); if(E && !E.done) persistExam(); E = null; M = null; renderHome(); show("home"); }
 function rerender(){
   applyI18n();
   const act = activeScreen();
-  if(act==="home") renderHome(); else if(act==="log") renderLog();
+  if(act==="home") renderHome(); else if(act==="log") renderLog(); else if(act==="guide") renderGuide();
   else if(act==="play" && M) renderPractice(); else if(act==="exam" && E) renderExam();
   else if(act==="result"){ /* keep; language applies on next render */ }
 }
@@ -1148,6 +1197,8 @@ function init(){
   $("#homeBtn").onclick=goHome; $("#toMapBtn").onclick=goHome;
   $("#launchBtn").onclick=()=> S.mode==="exam" ? startExam() : startPractice();
   $("#logBtn").onclick=()=>{ renderLog(); show("log"); };
+  $("#guideBtn").onclick=()=>{ $("#guideSearch").value=""; renderGuide(); show("guide"); };
+  $("#guideSearch").oninput=()=>renderGuide();
   $("#examOnly").onchange=e=>{ S.examOnly=e.target.checked; save(); renderHome(); };
   $("#skipBtn").onclick=()=>{ if(M && M.view===M.i && !answeredCur()) commitPractice(null); };
   $("#lockBtn").onclick=lockPractice;

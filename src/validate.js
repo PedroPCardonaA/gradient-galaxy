@@ -1,6 +1,6 @@
 const fs=require('fs'); const src=fs.readFileSync(process.argv[2],'utf8');
 const QB=[], XP={}, FIX={};
-eval(['q1.js','q2.js','q3.js','q4.js','x1.js','x2.js','x3.js','x4.js','q1b.js','q2b.js','q3b.js','q4b.js','q1c.js','q2c.js','q3c.js','q4c.js','q1d.js','q2d.js','q3d.js','q4d.js','fix1.js','fix2.js','fix3.js','fix4.js'].map(f=>fs.readFileSync(f,'utf8')).join('\n'));
+eval(['q1.js','q2.js','q3.js','q4.js','x1.js','x2.js','x3.js','x4.js','q1b.js','q2b.js','q3b.js','q4b.js','q1c.js','q2c.js','q3c.js','q4c.js','q1d.js','q2d.js','q3d.js','q4d.js','guide.js','fix1.js','fix2.js','fix3.js','fix4.js'].map(f=>fs.readFileSync(f,'utf8')).join('\n')+'\n;globalThis.GUIDE=GUIDE;');
 for(const q of QB){ q.kind=q.kind||'single'; if(!q.x&&XP[q.id]) q.x=XP[q.id]; if(FIX[q.id]) Object.assign(q,FIX[q.id]); }
 const FIGKINDS=['scatter','line','bars','loss','rocMulti','cm','tree','fit','act','grid','waterfall','superpixel'];
 for(const id in FIX) if(!QB.some(q=>q.id===id)) console.log('FIX for unknown id',id);
@@ -31,6 +31,13 @@ for(const q of QB){
  }
  per[q.t]=(per[q.t]||0)+1; kinds[q.kind]=(kinds[q.kind]||0)+1; srcs[q.s]=(srcs[q.s]||0)+1;
 }
+{ const gids=new Set(), gper={}; if(typeof GUIDE==='undefined'||!Array.isArray(GUIDE)) err('GUIDE missing'); else {
+  GUIDE.forEach(g=>{ if(!Number.isInteger(g.t)||g.t<0||g.t>11) err('guide bad t',g.t); if(!Array.isArray(g.items)||!g.items.length) err('guide empty topic',g.t);
+    (g.items||[]).forEach(it=>{ if(gids.has(it.id)) err('guide dup id',it.id); gids.add(it.id); gper[g.t]=(gper[g.t]||0)+1;
+      for(const k of ['n','f','e']) if(!bi(it[k])) err('guide bad '+k,it.id); if(it.ex!==undefined && !bi(it.ex)) err('guide bad ex',it.id);
+      for(const k of ['n','f','e','ex']) if(it[k]) it[k].forEach(x=>{ if(/undefined|NaN/.test(x)) err('guide undefined/NaN in '+k,it.id); }); }); });
+  for(let t=0;t<12;t++) if(!gper[t]) err('guide missing topic',t);
+  console.log('guide cards',gids.size,JSON.stringify(gper)); } }
 console.log('total',QB.length,'errors',errs); console.log('per topic',JSON.stringify(per)); console.log('kinds',JSON.stringify(kinds),'sources',JSON.stringify(srcs));
 // scoring tests
 const grab=n=>src.match(new RegExp('function '+n+'\\([\\s\\S]*?\\n}\\n'))[0];
