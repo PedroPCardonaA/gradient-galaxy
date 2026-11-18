@@ -1,6 +1,6 @@
 const fs=require('fs'); const src=fs.readFileSync(process.argv[2],'utf8');
 const QB=[], XP={}, FIX={};
-eval(['q1.js','q2.js','q3.js','q4.js','x1.js','x2.js','x3.js','x4.js','q1b.js','q2b.js','q3b.js','q4b.js','q1c.js','q2c.js','q3c.js','q4c.js','fix1.js','fix2.js','fix3.js','fix4.js'].map(f=>fs.readFileSync(f,'utf8')).join('\n'));
+eval(['q1.js','q2.js','q3.js','q4.js','x1.js','x2.js','x3.js','x4.js','q1b.js','q2b.js','q3b.js','q4b.js','q1c.js','q2c.js','q3c.js','q4c.js','q1d.js','q2d.js','q3d.js','q4d.js','fix1.js','fix2.js','fix3.js','fix4.js'].map(f=>fs.readFileSync(f,'utf8')).join('\n'));
 for(const q of QB){ q.kind=q.kind||'single'; if(!q.x&&XP[q.id]) q.x=XP[q.id]; if(FIX[q.id]) Object.assign(q,FIX[q.id]); }
 const FIGKINDS=['scatter','line','bars','loss','rocMulti','cm','tree','fit','act','grid','waterfall','superpixel'];
 for(const id in FIX) if(!QB.some(q=>q.id===id)) console.log('FIX for unknown id',id);
@@ -12,6 +12,8 @@ for(const q of QB){
  if(!(q.t>=0&&q.t<=11)) err('bad t',q.id);
  if(!['single','tf','multi','num'].includes(q.kind)) err('bad kind',q.id);
  if(q.fig){ const k = typeof q.fig==='string' ? q.fig : (typeof q.fig.k==='string' ? q.fig.k : 'scatter'); if(typeof q.fig==='string' ? !['roc','shap','smiley'].includes(k) : !FIGKINDS.includes(k)) err('bad fig kind',q.id,k); }
+ if(q.f!==undefined && !bi(q.f)) err('bad f',q.id);
+ if(/\.c\d+$/.test(q.id) && !q.f) err('math q missing formula f',q.id);
  if(q.kind==='num'){ if(!bi(q.q)||!bi(q.w)) err('missing lang',q.id); if(!Number.isFinite(q.ans)) err('num ans',q.id); if(!(q.tol>0)) err('num tol',q.id); if(q.unit&&!bi(q.unit)) err('unit',q.id); if(!['e24','e25','notes','new'].includes(q.s)) err('bad s',q.id); per[q.t]=(per[q.t]||0)+1; kinds.num=(kinds.num||0)+1; srcs[q.s]=(srcs[q.s]||0)+1; if(ids.has(q.id+'#')) err('dup'); continue; }
  if(!bi(q.q)||!bi(q.w)||!q.o.every(bi)) err('missing lang',q.id);
  if(!['e24','e25','notes','new'].includes(q.s)) err('bad s',q.id);

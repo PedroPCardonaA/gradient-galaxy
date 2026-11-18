@@ -122,6 +122,9 @@ table.cm th{background:var(--opt);font-weight:600}
 code{font-family:ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;font-size:.92em;background:var(--code);padding:1px 5px;border-radius:5px}
 pre.code{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:12px 14px;overflow-x:auto;font-size:14px;margin:0 0 12px}
 pre.code code{background:none;padding:0}
+.formula{background:var(--code);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:10px 14px;margin:0 0 12px;font-size:15px;line-height:1.7;overflow-x:auto}
+.formula .fl{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.formula sub,.formula sup{font-size:.72em}
 .fig{display:flex;justify-content:center;margin:0 0 12px}
 .fig svg{max-width:100%;height:auto;background:var(--panel-solid);border-radius:12px;border:1px solid var(--border)}
 .opts{display:grid;gap:9px}
@@ -228,6 +231,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
 .rep .allopts-flat .note{color:#555;font-size:12px;margin:2px 0 0 18px}
 .rep .ex-row{background:#f6f7fb}
 .rep pre.code{background:#f1f3fb;border:1px solid #ccd2e6;white-space:pre-wrap}
+.rep .formula{background:#f1f3fb;border-color:#ccd2e6;border-left-color:#4b5cf0;break-inside:avoid}
 @media print{
   @page{margin:14mm 12mm}
   html,body{background:#fff!important}
@@ -422,7 +426,7 @@ const I18N = {
     examResult:"Eksamensresultat", examHistory:"Eksamenshistorikk", date:"Dato", noExams:"Ingen eksamener levert ennå.",
     resume:"Du har en påbegynt eksamen.", resumeBtn:"▶ Fortsett", discard:"Forkast", answeredOf:"besvart",
     themeDark:"🌙 Mørk", themeLight:"☀️ Lys", themeAuto:"🖥️ Auto",
-    kindNum:"Regn ut – skriv inn tallet", keysNum:"Skriv svaret · Enter låser · Esc forlater feltet", numPh:"Ditt svar", tolerance:"toleranse",
+    kindNum:"Regn ut – skriv inn tallet", keysNum:"Skriv svaret · Enter låser · Esc forlater feltet", numPh:"Ditt svar", formula:"📐 Formel", tolerance:"toleranse",
     noClear:"Som på eksamen: du kan bytte svar, men ikke fjerne et avgitt svar.", noClearMulti:"Minst ett alternativ må være krysset av når du først har svart (du kan bytte hvilke).",
     exportPdf:"📄 Eksporter PDF", repTitle:"Gradient Galaxy · TDT4172 – rapport", repExam:"Eksamen", repPractice:"Øving", repQ:"spørsmål", pdfHint:"Velg «Lagre som PDF» i utskriftsvinduet."
   },
@@ -458,7 +462,7 @@ const I18N = {
     examResult:"Exam result", examHistory:"Exam history", date:"Date", noExams:"No exams submitted yet.",
     resume:"You have an exam in progress.", resumeBtn:"▶ Resume", discard:"Discard", answeredOf:"answered",
     themeDark:"🌙 Dark", themeLight:"☀️ Light", themeAuto:"🖥️ Auto",
-    kindNum:"Calculate – type the number", keysNum:"Type your answer · Enter locks · Esc leaves the field", numPh:"Your answer", tolerance:"tolerance",
+    kindNum:"Calculate – type the number", keysNum:"Type your answer · Enter locks · Esc leaves the field", numPh:"Your answer", formula:"📐 Formula", tolerance:"tolerance",
     noClear:"Like the real exam: you can switch answers, but not remove an answer once given.", noClearMulti:"Once answered, at least one option must stay ticked (you can change which).",
     exportPdf:"📄 Export PDF", repTitle:"Gradient Galaxy · TDT4172 – report", repExam:"Exam", repPractice:"Practice", repQ:"questions", pdfHint:"Choose “Save as PDF” in the print dialog."
   }
@@ -788,11 +792,13 @@ const xNote = (q,i) => (q.x && q.x[i]) ? tx(q.x[i]) : "";
 const optText = (q,i) => q.kind==="tf" ? (i===0 ? "✔ " : "✘ ") + T(i===0 ? "true" : "false") : tx(q.o[i]);
 
 /* question body (text, figure, code) into given containers */
+function formulaHTML(q){ return q.f ? `<div class="formula"><span class="fl">${T("formula")}</span>${tx(q.f)}</div>` : ""; }
 function renderBody(q, metaEl, textEl, extraEl, extraBadges){
   metaEl.innerHTML = topicBadge(q.t) + srcBadge(q) + kindBadge(q) + (extraBadges||"");
   textEl.innerHTML = tx(q.q);
   const fh = figHTML(q.fig); extraEl.innerHTML = fh ? `<div class="fig">${fh}</div>` : "";
   if(q.c){ const pre=document.createElement("pre"); pre.className="code"; const c=document.createElement("code"); c.textContent=q.c; pre.appendChild(c); extraEl.prepend(pre); }
+  if(q.f) extraEl.insertAdjacentHTML("afterbegin", formulaHTML(q));
 }
 /* options HTML; reveal=true shows correctness */
 const numDisp = (q, v) => (v===null||v===undefined) ? "" : String(+Number(v).toFixed(6)).replace(".", S.lang==="no" ? "," : ".");
@@ -1093,7 +1099,7 @@ function buildReport(rep){
     h += `<h2>${T("debrief")}</h2>`;
     rep.qs.forEach((q,i) => { const ch = rep.ans[i], res = resultOf(q, ch), fh = figHTML(q.fig), gi = rep.groups ? rep.groups.findIndex(g => i>=g.start && i<g.start+g.len) : -1;
       h += `<div class="rq ${res==="correct"?"good":res==="wrong"?"bad":""}"><div class="rqh"><span>${res==="correct"?"✅":res==="wrong"?"❌":"⏭️"} ${i+1}. ${gi>=0 ? T("part")+" "+(gi+1)+" · " : ""}${TOPICS[q.t].emoji} ${TOPICS[q.t][S.lang]}${q.kind!=="single" ? " · "+kindName(q) : ""} · ${T(SRC_KEY[q.s]||"practice")}</span><b>${fmtSigned(sc.perQ[i])}</b></div>`
-        + `<div class="rqt">${tx(q.q)}</div>${q.c ? `<pre class="code"><code>${esc(q.c)}</code></pre>` : ""}${fh ? `<div class="fig">${fh}</div>` : ""}${renderExplain(q, ch, true)}</div>`; });
+        + `<div class="rqt">${tx(q.q)}</div>${formulaHTML(q)}${q.c ? `<pre class="code"><code>${esc(q.c)}</code></pre>` : ""}${fh ? `<div class="fig">${fh}</div>` : ""}${renderExplain(q, ch, true)}</div>`; });
     h += `<p style="color:#777;font-size:11px">${T("footer")}</p></div>`;
     $("#printReport").innerHTML = h;
   } finally { if(prev) root.setAttribute("data-theme", prev); else root.removeAttribute("data-theme"); }

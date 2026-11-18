@@ -122,6 +122,9 @@ table.cm th{background:var(--opt);font-weight:600}
 code{font-family:ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;font-size:.92em;background:var(--code);padding:1px 5px;border-radius:5px}
 pre.code{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:12px 14px;overflow-x:auto;font-size:14px;margin:0 0 12px}
 pre.code code{background:none;padding:0}
+.formula{background:var(--code);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:10px 14px;margin:0 0 12px;font-size:15px;line-height:1.7;overflow-x:auto}
+.formula .fl{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.formula sub,.formula sup{font-size:.72em}
 .fig{display:flex;justify-content:center;margin:0 0 12px}
 .fig svg{max-width:100%;height:auto;background:var(--panel-solid);border-radius:12px;border:1px solid var(--border)}
 .opts{display:grid;gap:9px}
@@ -228,6 +231,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
 .rep .allopts-flat .note{color:#555;font-size:12px;margin:2px 0 0 18px}
 .rep .ex-row{background:#f6f7fb}
 .rep pre.code{background:#f1f3fb;border:1px solid #ccd2e6;white-space:pre-wrap}
+.rep .formula{background:#f1f3fb;border-color:#ccd2e6;border-left-color:#4b5cf0;break-inside:avoid}
 @media print{
   @page{margin:14mm 12mm}
   html,body{background:#fff!important}
@@ -3023,15 +3027,18 @@ QB.push(
 QB.push(
 // ===== Topic 0: Data & preprocessing =====
 {id:"p-0.c1",t:0,s:"new",kind:"num",
+ f:["x′ = (x − min) / (max − min)", "x′ = (x − min) / (max − min)"],
  q:["Min-max-skalering: en feature har min = 12 og max = 72 i treningsdataene. Hva blir den skalerte verdien til x = 27? Svar med 2 desimaler.","Min-max scaling: a feature has min = 12 and max = 72 in the training data. What is the scaled value of x = 27? Answer with 2 decimals."],
  ans:0.25,tol:0.005,
  w:["x' = (x − min)/(max − min) = (27 − 12)/(72 − 12) = 15/60 = <b>0.25</b>.","x' = (x − min)/(max − min) = (27 − 12)/(72 − 12) = 15/60 = <b>0.25</b>."]},
 {id:"p-0.c2",t:0,s:"new",
+ f:["z = (x − μ) / σ", "z = (x − μ) / σ"],
  q:["Standardisering (z-score): treningsdataene har μ = 50 og σ = 8 for en feature. Hva blir testverdien x = 38 etter transformasjon?","Standardisation (z-score): the training data have μ = 50 and σ = 8 for a feature. What does the test value x = 38 become after the transform?"],
  o:[["−1.5","−1.5"],["1.5","1.5"],["−12","−12"],["−0.1875","−0.1875"]],a:0,
  x:[null,["Fortegnet er snudd. x ligger under snittet, så z må være negativ.","The sign is flipped. x is below the mean, so z must be negative."],["Du har bare trukket fra μ og glemt å dele på σ.","You only subtracted μ and forgot to divide by σ."],["Du har delt på variansen σ² = 64, ikke på standardavviket σ = 8.","You divided by the variance σ² = 64 instead of the standard deviation σ = 8."]],
  w:["z = (x − μ)/σ = (38 − 50)/8 = −12/8 = <b>−1.5</b>. μ og σ hentes fra treningsdataene.","z = (x − μ)/σ = (38 − 50)/8 = −12/8 = <b>−1.5</b>. μ and σ come from the training data."]},
 {id:"p-0.c3",t:0,s:"new",
+ f:["One-hot (uten drop): k kolonner for en nominell feature med k verdier<br>Ordinal koding: 1 kolonne · numerisk feature: 1 kolonne", "One-hot (no drop): k columns for a nominal feature with k values<br>Ordinal encoding: 1 column · numeric feature: 1 column"],
  q:["Et datasett har fire features. <i>farge</i> er nominell med 4 verdier, <i>land</i> er nominell med 6 verdier, <i>størrelse</i> er ordinal (S/M/L) og <i>alder</i> er numerisk. De nominelle får full one-hot-koding uten å droppe kolonner, den ordinale får ordinal koding, og den numeriske beholdes. Hvor mange kolonner får du?","A dataset has four features. <i>colour</i> is nominal with 4 values, <i>country</i> is nominal with 6 values, <i>size</i> is ordinal (S/M/L) and <i>age</i> is numeric. The nominal ones get full one-hot encoding without dropping any column, the ordinal one gets ordinal encoding, and the numeric one is kept. How many columns do you get?"],
  o:[["12","12"],["14","14"],["10","10"],["4","4"]],a:0,
  x:[null,["Her er størrelse også one-hot-kodet (3 kolonner). Den er ordinal og skal bare få én kolonne.","Here size is also one-hot encoded (3 columns). It is ordinal and should get just one column."],["Dette er drop-first (3 + 5), men oppgaven sier at ingen kolonner droppes.","This is drop-first (3 + 5), but the question says no columns are dropped."],["Dette er antallet opprinnelige features, uten koding.","This is the number of original features, with no encoding."]],
@@ -3054,15 +3061,18 @@ QB.push(
 
 // ===== Topic 1: Logistic regression & gradient descent =====
 {id:"p-1.c1",t:1,s:"new",kind:"num",
+ f:["z = <b>w</b>·<b>x</b> + b = Σ<sub>i</sub> w<sub>i</sub>x<sub>i</sub> + b<br>σ(z) = 1 / (1 + e<sup>−z</sup>)", "z = <b>w</b>·<b>x</b> + b = Σ<sub>i</sub> w<sub>i</sub>x<sub>i</sub> + b<br>σ(z) = 1 / (1 + e<sup>−z</sup>)"],
  q:["Logistisk regresjon med w = (2, −1), b = 0.5 og x = (1, 3). Hva er P(y = 1 | x)? Svar med 2 desimaler.","Logistic regression with w = (2, −1), b = 0.5 and x = (1, 3). What is P(y = 1 | x)? Answer with 2 decimals."],
  ans:0.3775,tol:0.006,
  w:["z = 2·1 + (−1)·3 + 0.5 = −0.5. Da er σ(z) = 1/(1 + e<sup>0.5</sup>) = 1/(1 + 1.6487) ≈ <b>0.38</b>.","z = 2·1 + (−1)·3 + 0.5 = −0.5. Then σ(z) = 1/(1 + e<sup>0.5</sup>) = 1/(1 + 1.6487) ≈ <b>0.38</b>."]},
 {id:"p-1.c2",t:1,s:"new",
+ f:["w<sub>t+1</sub> = w<sub>t</sub> − η · ∂L/∂w", "w<sub>t+1</sub> = w<sub>t</sub> − η · ∂L/∂w"],
  q:["Gradient descent: nå er w = 3, ∂L/∂w = 4 og læringsraten η = 0.25. Hva blir w etter ett steg?","Gradient descent: currently w = 3, ∂L/∂w = 4 and the learning rate η = 0.25. What is w after one step?"],
  o:[["2","2"],["4","4"],["2.75","2.75"],["−1","−1"]],a:0,
  x:[null,["Du har lagt til η·gradienten. Det er gradient ascent.","You added η·gradient. That is gradient ascent."],["Du har trukket fra η i stedet for η·gradienten.","You subtracted η instead of η·gradient."],["Du har trukket fra hele gradienten uten å gange med η.","You subtracted the full gradient without multiplying by η."]],
  w:["w ← w − η·∂L/∂w = 3 − 0.25·4 = <b>2</b>.","w ← w − η·∂L/∂w = 3 − 0.25·4 = <b>2</b>."]},
 {id:"p-1.c3",t:1,s:"new",
+ f:["L(y<sub>pred</sub>, y) = −y ln y<sub>pred</sub> − (1 − y) ln(1 − y<sub>pred</sub>)   (her er y<sub>pred</sub> = p)", "L(y<sub>pred</sub>, y) = −y ln y<sub>pred</sub> − (1 − y) ln(1 − y<sub>pred</sub>)   (here y<sub>pred</sub> = p)"],
  q:["Binær kryssentropi (naturlig log): sann klasse y = 1, og modellen gir p = 0.8. Hva er tapet for dette eksempelet?","Binary cross-entropy (natural log): the true class is y = 1 and the model outputs p = 0.8. What is the loss for this example?"],
  o:[["0.223","0.223"],["1.609","1.609"],["0.2","0.2"],["0.097","0.097"]],a:0,
  x:[null,["Dette er −ln(0.2). Du har brukt 1 − p, men for y = 1 er tapet −ln(p).","This is −ln(0.2). You used 1 − p, but for y = 1 the loss is −ln(p)."],["Dette er 1 − p, et absolutt avvik, ikke log-tap.","This is 1 − p, an absolute error, not log loss."],["Dette er −log₁₀(0.8). Kryssentropi bruker vanligvis naturlig logaritme.","This is −log₁₀(0.8). Cross-entropy normally uses the natural log."]],
@@ -3085,15 +3095,18 @@ QB.push(
 
 // ===== Topic 2: Classification metrics =====
 {id:"p-2.c1",t:2,s:"new",kind:"num",
+ f:["Precision = TP / (TP + FP) · Recall = TP / (TP + FN)<br>F1 = 2 · Precision · Recall / (Precision + Recall)", "Precision = TP / (TP + FP) · Recall = TP / (TP + FN)<br>F1 = 2 · Precision · Recall / (Precision + Recall)"],
  q:["Forvirringsmatrise: <table class='cm'><tr><th></th><th>Pred +</th><th>Pred −</th></tr><tr><th>Label +</th><td>40</td><td>20</td></tr><tr><th>Label −</th><td>10</td><td>130</td></tr></table>Hva er F1-scoren? Svar med 2 desimaler.","Confusion matrix: <table class='cm'><tr><th></th><th>Pred +</th><th>Pred −</th></tr><tr><th>Label +</th><td>40</td><td>20</td></tr><tr><th>Label −</th><td>10</td><td>130</td></tr></table>What is the F1 score? Answer with 2 decimals."],
  ans:0.7273,tol:0.006,
  w:["Precision = 40/(40+10) = 0.80, recall = 40/(40+20) = 0.667. F1 = 2·0.80·0.667/(0.80+0.667) = 2·40/(2·40+10+20) = 80/110 ≈ <b>0.73</b>.","Precision = 40/(40+10) = 0.80, recall = 40/(40+20) = 0.667. F1 = 2·0.80·0.667/(0.80+0.667) = 2·40/(2·40+10+20) = 80/110 ≈ <b>0.73</b>."]},
 {id:"p-2.c2",t:2,s:"new",
+ f:["Spesifisitet (TNR) = TN / (TN + FP)", "Specificity (TNR) = TN / (TN + FP)"],
  q:["Samme matrise: <table class='cm'><tr><th></th><th>Pred +</th><th>Pred −</th></tr><tr><th>Label +</th><td>40</td><td>20</td></tr><tr><th>Label −</th><td>10</td><td>130</td></tr></table>Hva er spesifisiteten?","Same matrix: <table class='cm'><tr><th></th><th>Pred +</th><th>Pred −</th></tr><tr><th>Label +</th><td>40</td><td>20</td></tr><tr><th>Label −</th><td>10</td><td>130</td></tr></table>What is the specificity?"],
  o:[["0.929","0.929"],["0.867","0.867"],["0.667","0.667"],["0.850","0.850"]],a:0,
  x:[null,["Dette er TN/(TN+FN) = 130/150, altså negativ prediktiv verdi (NPV).","This is TN/(TN+FN) = 130/150, i.e. the negative predictive value (NPV)."],["Dette er recall (sensitivitet) = 40/60.","This is recall (sensitivity) = 40/60."],["Dette er accuracy = (40+130)/200.","This is accuracy = (40+130)/200."]],
  w:["Spesifisitet = TN/(TN+FP) = 130/(130+10) = 130/140 ≈ <b>0.929</b>.","Specificity = TN/(TN+FP) = 130/(130+10) = 130/140 ≈ <b>0.929</b>."]},
 {id:"p-2.c3",t:2,s:"new",kind:"num",unit:["%","%"],
+ f:["Accuracy = (TP + TN) / (TP + TN + FP + FN)", "Accuracy = (TP + TN) / (TP + TN + FP + FN)"],
  q:["Et testsett har 950 negative og 50 positive eksempler. En klassifikator predikerer alltid «negativ». Hva er accuracy i prosent? Svar med et helt tall.","A test set has 950 negative and 50 positive examples. A classifier always predicts “negative”. What is the accuracy in percent? Answer with a whole number."],
  ans:95,tol:0.5,
  w:["Alle 950 negative er riktige og alle 50 positive er feil: 950/1000 = <b>95 %</b>. Recall er 0, så accuracy villeder ved ubalanse.","All 950 negatives are correct and all 50 positives are wrong: 950/1000 = <b>95 %</b>. Recall is 0, so accuracy is misleading under imbalance."]},
@@ -3137,12 +3150,14 @@ const TREE = {text:"x₁ ≤ 2.5\ngini = 0.5\nsamples = 100\nvalue = [50, 50]",
 QB.push(
 // ===== Topic 3: Bayes & imbalanced data =====
 {id:"p-3.c1",t:3,s:"new",kind:"num",
+ f:["p(C|x) = p(x|C)·p(C) / p(x)<br>p(x) = p(x|C)·p(C) + p(x|¬C)·p(¬C)", "p(C|x) = p(x|C)·p(C) / p(x)<br>p(x) = p(x|C)·p(C) + p(x|¬C)·p(¬C)"],
  q:["En sykdom har prevalens 1 %. En test har sensitivitet 90 % og falsk-positiv-rate 5 %. En pasient tester positivt. Hva er p(syk | positiv) i prosent? Oppgi svaret med én desimal.",
     "A disease has a prevalence of 1 %. A test has 90 % sensitivity and a 5 % false-positive rate. A patient tests positive. What is p(sick | positive) in percent? Give the answer to one decimal place."],
  ans:15.38,tol:0.06,unit:["%","%"],
  w:["Bayes: p(+) = 0.9·0.01 + 0.05·0.99 = 0.009 + 0.0495 = 0.0585. p(syk|+) = 0.009 / 0.0585 ≈ 0.1538, altså 15.4 %. Den lave prioren gjør at de fleste positive er falske positive.",
     "Bayes: p(+) = 0.9·0.01 + 0.05·0.99 = 0.009 + 0.0495 = 0.0585. p(sick|+) = 0.009 / 0.0585 ≈ 0.1538, so 15.4 %. The low prior means most positives are false positives."]},
 {id:"p-3.c2",t:3,s:"new",
+ f:["p(C<sub>k</sub>|x) ∝ p(C<sub>k</sub>) · Π<sub>i</sub> p(x<sub>i</sub>|C<sub>k</sub>)<br>Normalisering: p(C<sub>k</sub>|x) = s<sub>k</sub> / Σ<sub>j</sub> s<sub>j</sub>, der s<sub>k</sub> = p(C<sub>k</sub>) · Π<sub>i</sub> p(x<sub>i</sub>|C<sub>k</sub>)", "p(C<sub>k</sub>|x) ∝ p(C<sub>k</sub>) · Π<sub>i</sub> p(x<sub>i</sub>|C<sub>k</sub>)<br>Normalising: p(C<sub>k</sub>|x) = s<sub>k</sub> / Σ<sub>j</sub> s<sub>j</sub>, where s<sub>k</sub> = p(C<sub>k</sub>) · Π<sub>i</sub> p(x<sub>i</sub>|C<sub>k</sub>)"],
  q:["Naïve Bayes for spam: p(spam) = 0.4, p(«free»|spam) = 0.5, p(lenke|spam) = 0.6; p(ham) = 0.6, p(«free»|ham) = 0.1, p(lenke|ham) = 0.3. En e-post inneholder både «free» og en lenke. Hva er p(spam | e-posten)?",
     "Naïve Bayes for spam: p(spam) = 0.4, p('free'|spam) = 0.5, p(link|spam) = 0.6; p(ham) = 0.6, p('free'|ham) = 0.1, p(link|ham) = 0.3. An e-mail contains both 'free' and a link. What is p(spam | e-mail)?"],
  o:[["≈ 0.12","≈ 0.12"],["≈ 0.87","≈ 0.87"],["≈ 0.91","≈ 0.91"],["≈ 0.50","≈ 0.50"]],a:1,
@@ -3153,8 +3168,9 @@ QB.push(
     ["Dette er hva du får hvis du glemmer prioren: 0.30 / (0.30 + 0.03) ≈ 0.91. Prioren p(spam) = 0.4 må være med.","This is what you get if you forget the prior: 0.30 / (0.30 + 0.03) ≈ 0.91. The prior p(spam) = 0.4 must be included."],
     ["0.5 er bare p(«free»|spam), en enkelt likelihood, ikke posterioren.","0.5 is just p('free'|spam), a single likelihood, not the posterior."]]},
 {id:"p-3.c3",t:3,s:"new",
- q:["Et datasett har 9 000 negative og 1 000 positive eksempler. Med klassevekter w_c = n / (K·n_c) (K = antall klasser), hvilken vekt får den positive klassen?",
-    "A dataset has 9,000 negative and 1,000 positive examples. Using class weights w_c = n / (K·n_c) (K = number of classes), what weight does the positive class get?"],
+ f:["w<sub>c</sub> = n / (K · n<sub>c</sub>)   (n = antall eksempler, K = antall klasser, n<sub>c</sub> = antall i klasse c)", "w<sub>c</sub> = n / (K · n<sub>c</sub>)   (n = number of examples, K = number of classes, n<sub>c</sub> = number in class c)"],
+ q:["Et datasett har 9 000 negative og 1 000 positive eksempler. Med klassevektene i formelen, hvilken vekt får den positive klassen?",
+    "A dataset has 9,000 negative and 1,000 positive examples. Using the class weights in the formula, what weight does the positive class get?"],
  o:[["5","5"],["9","9"],["0.556","0.556"],["10","10"]],a:0,
  w:["n = 10 000, K = 2, n_pos = 1 000: w_pos = 10 000 / (2·1 000) = 5. Negativ klasse: 10 000 / (2·9 000) ≈ 0.556. Feil på minoritetsklassen koster nå 9 ganger mer.",
     "n = 10,000, K = 2, n_pos = 1,000: w_pos = 10,000 / (2·1,000) = 5. Negative class: 10,000 / (2·9,000) ≈ 0.556. Errors on the minority class now cost 9 times as much."],
@@ -3163,6 +3179,7 @@ QB.push(
     ["0.556 er vekten til den negative klassen (10 000 / 18 000).","0.556 is the weight of the negative class (10,000 / 18,000)."],
     ["10 = n / n_pos; du har glemt å dele på K = 2.","10 = n / n_pos; you forgot to divide by K = 2."]]},
 {id:"p-3.c4",t:3,s:"new",kind:"num",
+ f:["Andel av volumet i en underkube med sidekant e: r = e<sup>d</sup>  ⇒  e = r<sup>1/d</sup>", "Share of the volume in a sub-cube with edge e: r = e<sup>d</sup>  ⇒  e = r<sup>1/d</sup>"],
  q:["Dimensjonalitetens forbannelse: data er uniformt fordelt i en enhetshyperkube med d = 10 dimensjoner. Hvor lang må sidekanten på en underkube være for å inneholde 10 % av punktene? Oppgi svaret med to desimaler.",
     "Curse of dimensionality: data are uniformly distributed in a unit hypercube with d = 10 dimensions. How long must the edge of a sub-cube be to contain 10 % of the points? Give the answer to two decimal places."],
  ans:0.794,tol:0.005,
@@ -3210,12 +3227,14 @@ QB.push(
 
 // ===== Topic 4: Trees & ensembles =====
 {id:"p-4.c1",t:4,s:"new",kind:"num",
+ f:["Gini(D) = 1 − Σ<sub>i</sub> p<sub>i</sub><sup>2</sup>", "Gini(D) = 1 − Σ<sub>i</sub> p<sub>i</sub><sup>2</sup>"],
  q:["En node i et beslutningstre har klassefordelingen [30, 20]. Hva er Gini-urenheten? Oppgi svaret med to desimaler.",
     "A node in a decision tree has the class counts [30, 20]. What is its Gini impurity? Give the answer to two decimal places."],
  ans:0.48,tol:0.005,
  w:["p = (0.6, 0.4). Gini = 1 − (0.6² + 0.4²) = 1 − (0.36 + 0.16) = 0.48.",
     "p = (0.6, 0.4). Gini = 1 − (0.6² + 0.4²) = 1 − (0.36 + 0.16) = 0.48."]},
 {id:"p-4.c2",t:4,s:"new",
+ f:["I(p<sub>1</sub>, …, p<sub>k</sub>) = −Σ<sub>i</sub> p<sub>i</sub> log<sub>2</sub> p<sub>i</sub><br>ΔI = I<sub>før</sub> − Σ<sub>i</sub> (n<sub>i</sub>/n) · I(D<sub>i</sub>)", "I(p<sub>1</sub>, …, p<sub>k</sub>) = −Σ<sub>i</sub> p<sub>i</sub> log<sub>2</sub> p<sub>i</sub><br>ΔI = I<sub>before</sub> − Σ<sub>i</sub> (n<sub>i</sub>/n) · I(D<sub>i</sub>)"],
  q:["En foreldernode har [8, 8]. En split gir venstre barn [6, 2] og høyre barn [2, 6]. Hva er informasjonsgevinsten (entropi, log₂)?",
     "A parent node has [8, 8]. A split gives a left child [6, 2] and a right child [2, 6]. What is the information gain (entropy, log₂)?"],
  o:[["≈ 0.19","≈ 0.19"],["≈ 0.81","≈ 0.81"],["≈ 1.00","≈ 1.00"],["≈ 0.13","≈ 0.13"]],a:0,
@@ -3226,14 +3245,16 @@ QB.push(
     ["1.00 er entropien til foreldernoden alene.","1.00 is the entropy of the parent node alone."],
     ["0.13 (0.5 − 0.375) er reduksjonen i Gini, ikke informasjonsgevinsten med entropi.","0.13 (0.5 − 0.375) is the Gini decrease, not the entropy-based information gain."]]},
 {id:"p-4.c3",t:4,s:"new",kind:"num",
+ f:["P(et eksempel trekkes ikke i én trekning) = 1 − 1/n<br>P(out-of-bag etter n trekninger) = (1 − 1/n)<sup>n</sup>", "P(an example is not drawn in one draw) = 1 − 1/n<br>P(out-of-bag after n draws) = (1 − 1/n)<sup>n</sup>"],
  q:["Bagging: et bootstrap-utvalg trekkes med tilbakelegging fra n = 10 eksempler. Hva er sannsynligheten for at et bestemt eksempel er out-of-bag (aldri trukket)? Oppgi svaret i prosent med én desimal.",
     "Bagging: a bootstrap sample is drawn with replacement from n = 10 examples. What is the probability that a given example is out-of-bag (never drawn)? Give the answer in percent to one decimal place."],
  ans:34.87,tol:0.06,unit:["%","%"],
  w:["For hvert av de 10 trekkene er sjansen for ikke å trekke eksemplet 1 − 1/10 = 0.9. Altså 0.9¹⁰ ≈ 0.3487, eller 34.9 %. Når n → ∞ går dette mot 1/e ≈ 36.8 %.",
     "On each of the 10 draws the chance of not drawing the example is 1 − 1/10 = 0.9. So 0.9¹⁰ ≈ 0.3487, or 34.9 %. As n → ∞ this tends to 1/e ≈ 36.8 %."]},
 {id:"p-4.c4",t:4,s:"new",
- q:["I AdaBoost får en svak lærer vekten α = ½·ln((1 − ε)/ε). Hva er α når den vektede feilraten er ε = 0.2?",
-    "In AdaBoost a weak learner gets the weight α = ½·ln((1 − ε)/ε). What is α when the weighted error rate is ε = 0.2?"],
+ f:["α = ½ · ln((1 − ε) / ε)", "α = ½ · ln((1 − ε) / ε)"],
+ q:["I AdaBoost får en svak lærer vekten α i formelen. Hva er α når den vektede feilraten er ε = 0.2?",
+    "In AdaBoost a weak learner gets the weight α in the formula. What is α when the weighted error rate is ε = 0.2?"],
  o:[["≈ 0.69","≈ 0.69"],["≈ 1.39","≈ 1.39"],["≈ 0.80","≈ 0.80"],["≈ −0.69","≈ −0.69"]],a:0,
  w:["(1 − 0.2)/0.2 = 4, ln 4 ≈ 1.386, og α = ½·1.386 ≈ 0.69. Lavere feil gir større α, og ε = 0.5 gir α = 0.",
     "(1 − 0.2)/0.2 = 4, ln 4 ≈ 1.386, and α = ½·1.386 ≈ 0.69. Lower error gives a larger α, and ε = 0.5 gives α = 0."],
@@ -3286,12 +3307,14 @@ QB.push(
 
 // ===== Topic 5: Regression, bias/variance & validation =====
 {id:"p-5.c1",t:5,s:"new",kind:"num",
+ f:["MSE = (1/N) · Σ<sub>i</sub> (y<sup>(i)</sup> − ŷ<sup>(i)</sup>)<sup>2</sup>", "MSE = (1/N) · Σ<sub>i</sub> (y<sup>(i)</sup> − ŷ<sup>(i)</sup>)<sup>2</sup>"],
  q:["Sanne verdier y = [3, 5, 2, 7] og prediksjoner ŷ = [2, 5, 4, 6]. Hva er MSE? Oppgi svaret med én desimal.",
     "True values y = [3, 5, 2, 7] and predictions ŷ = [2, 5, 4, 6]. What is the MSE? Give the answer to one decimal place."],
  ans:1.5,tol:0.005,
  w:["Feil: 1, 0, −2, 1. Kvadrert: 1, 0, 4, 1, med sum 6. MSE = 6/4 = 1.5. (MAE ville vært 4/4 = 1.0.)",
     "Errors: 1, 0, −2, 1. Squared: 1, 0, 4, 1, summing to 6. MSE = 6/4 = 1.5. (MAE would be 4/4 = 1.0.)"]},
 {id:"p-5.c2",t:5,s:"new",
+ f:["R<sup>2</sup> = 1 − SSE / SST<br>SSE = Σ (y<sup>(i)</sup> − ŷ<sup>(i)</sup>)<sup>2</sup> · SST = Σ (y<sup>(i)</sup> − ȳ)<sup>2</sup>", "R<sup>2</sup> = 1 − SSE / SST<br>SSE = Σ (y<sup>(i)</sup> − ŷ<sup>(i)</sup>)<sup>2</sup> · SST = Σ (y<sup>(i)</sup> − ȳ)<sup>2</sup>"],
  q:["Med de samme dataene (y = [3, 5, 2, 7], ŷ = [2, 5, 4, 6], SSE = 6), hva er R²?",
     "With the same data (y = [3, 5, 2, 7], ŷ = [2, 5, 4, 6], SSE = 6), what is R²?"],
  o:[["≈ 0.59","≈ 0.59"],["≈ 0.41","≈ 0.41"],["1.5","1.5"],["≈ −0.59","≈ −0.59"]],a:0,
@@ -3302,12 +3325,14 @@ QB.push(
     ["1.5 er MSE, ikke R².","1.5 is the MSE, not R²."],
     ["Negativ R² betyr at modellen er dårligere enn å predikere ȳ, men her er SSE < SST.","A negative R² means the model is worse than predicting ȳ, but here SSE < SST."]]},
 {id:"p-5.c3",t:5,s:"new",kind:"num",
+ f:["Antall monomer av grad ≤ p i d variabler = C(d + p, p) = (d + p)! / (d! · p!)", "Number of monomials of degree ≤ p in d variables = C(d + p, p) = (d + p)! / (d! · p!)"],
  q:["Du lager polynomfeatures av grad ≤ 2 fra 3 input-features (x₁, x₂, x₃), inkludert konstantleddet og alle kryssledd. Hvor mange features får du?",
     "You create polynomial features of degree ≤ 2 from 3 input features (x₁, x₂, x₃), including the constant term and all cross terms. How many features do you get?"],
  ans:10,tol:0.4,
  w:["1 (konstant) + 3 (lineære) + 3 (kvadrater x₁², x₂², x₃²) + 3 (kryssledd x₁x₂, x₁x₃, x₂x₃) = 10. Generelt C(d + p, p) = C(5, 2) = 10.",
     "1 (constant) + 3 (linear) + 3 (squares x₁², x₂², x₃²) + 3 (cross terms x₁x₂, x₁x₃, x₂x₃) = 10. In general C(d + p, p) = C(5, 2) = 10."]},
 {id:"p-5.c4",t:5,s:"new",
+ f:["k-fold: hver modell trenes på n·(k − 1)/k og valideres på n/k eksempler", "k-fold: each model is trained on n·(k − 1)/k and validated on n/k examples"],
  q:["Du kjører 5-fold kryssvalidering på 1 000 eksempler. Hvor mange eksempler trenes hver modell på?",
     "You run 5-fold cross-validation on 1,000 examples. How many examples is each model trained on?"],
  o:[["800","800"],["200","200"],["1 000","1,000"],["750","750"]],a:0,
@@ -3373,20 +3398,24 @@ QB.push(
 QB.push(
 // ===== t:6 Neural networks – math =====
 {id:"p-6.c1",t:6,s:"new",kind:"num",
+ f:["a = g(Σ<sub>i</sub> w<sub>i</sub>x<sub>i</sub> + b), med g = σ<br>σ(z) = 1 / (1 + e<sup>−z</sup>)", "a = g(Σ<sub>i</sub> w<sub>i</sub>x<sub>i</sub> + b), with g = σ<br>σ(z) = 1 / (1 + e<sup>−z</sup>)"],
  q:["Et nevron har vekter w = [0.5, −1, 2], bias b = −0.5 og sigmoid-aktivering. Hva er utgangen for x = [2, 1, 0.5]? Svar med 2 desimaler.","A neuron has weights w = [0.5, −1, 2], bias b = −0.5 and sigmoid activation. What is its output for x = [2, 1, 0.5]? Answer with 2 decimals."],
  ans:0.62,tol:0.005,
  w:["z = 0.5·2 + (−1)·1 + 2·0.5 − 0.5 = 1 − 1 + 1 − 0.5 = 0.5. σ(0.5) = 1/(1+e^−0.5) = 1/1.6065 ≈ 0.62.","z = 0.5·2 + (−1)·1 + 2·0.5 − 0.5 = 1 − 1 + 1 − 0.5 = 0.5. σ(0.5) = 1/(1+e^−0.5) = 1/1.6065 ≈ 0.62."]},
 {id:"p-6.c2",t:6,s:"new",
+ f:["Parametre i et Dense-lag = (n<sub>inn</sub> + 1) · n<sub>ut</sub>   (vekter + én bias per node)", "Parameters in a Dense layer = (n<sub>in</sub> + 1) · n<sub>out</sub>   (weights + one bias per unit)"],
  q:["Et MLP har 8 input-features, et skjult Dense-lag med 16 noder, et skjult Dense-lag med 4 noder og ett utgangsnevron. Hvor mange trenbare parametere har nettverket totalt?","An MLP has 8 input features, a hidden Dense layer with 16 units, a hidden Dense layer with 4 units and one output neuron. How many trainable parameters does the network have in total?"],
  o:[["217","217"],["196","196"],["225","225"],["29","29"]],a:0,
  x:[null,["196 er bare vektene (128 + 64 + 4) – du glemte én bias per nevron (16 + 4 + 1 = 21).","196 counts only the weights (128 + 64 + 4) – you forgot one bias per neuron (16 + 4 + 1 = 21)."],["225 gir også bias til de 8 input-nodene, men input-laget har ingen parametere.","225 also gives biases to the 8 input nodes, but the input layer has no parameters."],["29 er antall noder (8 + 16 + 4 + 1), ikke antall parametere.","29 is the number of nodes (8 + 16 + 4 + 1), not the number of parameters."]],
  w:["Per Dense-lag: (inn · ut) + ut. 8·16+16 = 144, 16·4+4 = 68, 4·1+1 = 5. Sum = 217.","Per Dense layer: (in · out) + out. 8·16+16 = 144, 16·4+4 = 68, 4·1+1 = 5. Total = 217."]},
 {id:"p-6.c3",t:6,s:"new",
+ f:["softmax(z)<sub>i</sub> = e<sup>z<sub>i</sub></sup> / Σ<sub>j</sub> e<sup>z<sub>j</sub></sup>", "softmax(z)<sub>i</sub> = e<sup>z<sub>i</sub></sup> / Σ<sub>j</sub> e<sup>z<sub>j</sub></sup>"],
  q:["Et utgangslag med softmax får logits z = [2, 1, 0]. Hva er sannsynligheten for klasse 1 (den med logit 2)?","An output layer with softmax receives logits z = [2, 1, 0]. What is the probability of class 1 (the one with logit 2)?"],
  o:[["≈ 0.665","≈ 0.665"],["≈ 0.667","≈ 0.667"],["≈ 0.881","≈ 0.881"],["≈ 0.333","≈ 0.333"]],a:0,
  x:[null,["0.667 = 2/(2+1+0): du normaliserte logitene direkte uten å ta eksponentialen.","0.667 = 2/(2+1+0): you normalised the logits directly without exponentiating."],["0.881 = σ(2): sigmoid av én logit, men softmax deler på summen over alle klassene.","0.881 = σ(2): the sigmoid of one logit, but softmax divides by the sum over all classes."],["0.333 = 1/3 ville bare stemt om alle logitene var like.","0.333 = 1/3 would only hold if all logits were equal."]],
  w:["softmax_i = e^{z_i}/Σ e^{z_j}. e² = 7.389, e¹ = 2.718, e⁰ = 1, sum = 11.107. 7.389/11.107 ≈ 0.665.","softmax_i = e^{z_i}/Σ e^{z_j}. e² = 7.389, e¹ = 2.718, e⁰ = 1, sum = 11.107. 7.389/11.107 ≈ 0.665."]},
 {id:"p-6.c4",t:6,s:"new",kind:"num",
+ f:["Iterasjoner per epoke = ⌈N / batch-størrelse⌉", "Iterations per epoch = ⌈N / batch size⌉"],
  q:["Du trener på 10 000 eksempler med batch-størrelse 32. Den siste, ufullstendige batchen teller også som en iterasjon. Hvor mange iterasjoner (vektoppdateringer) blir det per epoke? Svar med et heltall.","You train on 10,000 examples with batch size 32. The last, incomplete batch also counts as an iteration. How many iterations (weight updates) are there per epoch? Answer with an integer."],
  ans:313,tol:0.5,
  w:["10 000 / 32 = 312.5 → 312 fulle batcher + 1 ufullstendig = 313 iterasjoner per epoke.","10,000 / 32 = 312.5 → 312 full batches + 1 incomplete = 313 iterations per epoch."]},
@@ -3409,15 +3438,18 @@ QB.push(
 
 // ===== t:7 Clustering – math =====
 {id:"p-7.c1",t:7,s:"new",
+ f:["d(p, q) = √((p<sub>1</sub> − q<sub>1</sub>)<sup>2</sup> + (p<sub>2</sub> − q<sub>2</sub>)<sup>2</sup> + … + (p<sub>n</sub> − q<sub>n</sub>)<sup>2</sup>)<br>Punktet tilordnes sentroiden med minst d", "d(p, q) = √((p<sub>1</sub> − q<sub>1</sub>)<sup>2</sup> + (p<sub>2</sub> − q<sub>2</sub>)<sup>2</sup> + … + (p<sub>n</sub> − q<sub>n</sub>)<sup>2</sup>)<br>The point is assigned to the centroid with the smallest d"],
  q:["k-means tilordningssteg med euklidsk avstand: punktet (3, 3) og sentroidene C1 = (0, 3), C2 = (5, 5), C3 = (3, 7). Hvilken klynge får punktet?","k-means assignment step with Euclidean distance: the point (3, 3) and centroids C1 = (0, 3), C2 = (5, 5), C3 = (3, 7). Which cluster is the point assigned to?"],
  o:[["C1","C1"],["C2","C2"],["C3","C3"],["Uavgjort mellom C1 og C2","A tie between C1 and C2"]],a:1,
  x:[["Avstand til C1 = 3. Med Manhattan-avstand (3 mot 4) ville C1 vunnet, men euklidsk gir C2 = √8 ≈ 2.83 < 3.","Distance to C1 = 3. With Manhattan distance (3 vs 4) C1 would win, but Euclidean gives C2 = √8 ≈ 2.83 < 3."],null,["Avstand til C3 = 4, den største av de tre.","Distance to C3 = 4, the largest of the three."],["√8 ≈ 2.83 og 3 er ikke like, så det er ingen uavgjort.","√8 ≈ 2.83 and 3 are not equal, so there is no tie."]],
  w:["d(C1) = √(3² + 0²) = 3, d(C2) = √(2² + 2²) = √8 ≈ 2.83, d(C3) = √(0² + 4²) = 4. Nærmeste er C2.","d(C1) = √(3² + 0²) = 3, d(C2) = √(2² + 2²) = √8 ≈ 2.83, d(C3) = √(0² + 4²) = 4. The nearest is C2."]},
 {id:"p-7.c2",t:7,s:"new",kind:"num",
+ f:["μ = (1/|C|) · Σ<sub>x∈C</sub> x<br>Inertia-bidrag = Σ<sub>x∈C</sub> ‖x − μ‖<sup>2</sup>", "μ = (1/|C|) · Σ<sub>x∈C</sub> x<br>Inertia contribution = Σ<sub>x∈C</sub> ‖x − μ‖<sup>2</sup>"],
  q:["En klynge inneholder punktene (1, 2), (3, 4) og (5, 9). Oppdater sentroiden (gjennomsnitt), og regn så ut klyngens bidrag til inertia (summen av kvadrerte euklidske avstander til den nye sentroiden). Svar med et heltall.","A cluster contains the points (1, 2), (3, 4) and (5, 9). Update the centroid (the mean), then compute the cluster's contribution to the inertia (the sum of squared Euclidean distances to the new centroid). Answer with an integer."],
  ans:34,tol:0.5,
  w:["Sentroide = ((1+3+5)/3, (2+4+9)/3) = (3, 5). Kvadrerte avstander: (1,2): 4+9 = 13; (3,4): 0+1 = 1; (5,9): 4+16 = 20. Sum = 34.","Centroid = ((1+3+5)/3, (2+4+9)/3) = (3, 5). Squared distances: (1,2): 4+9 = 13; (3,4): 0+1 = 1; (5,9): 4+16 = 20. Total = 34."]},
 {id:"p-7.c3",t:7,s:"new",
+ f:["N<sub>ε</sub>(p) = {q : |p − q| ≤ ε}   (p selv er med)<br>p er et kjernepunkt hvis |N<sub>ε</sub>(p)| ≥ minPts", "N<sub>ε</sub>(p) = {q : |p − q| ≤ ε}   (p itself included)<br>p is a core point if |N<sub>ε</sub>(p)| ≥ minPts"],
  q:["DBSCAN på 1D-punktene 1, 2, 2.5, 3, 7, 8, 15 med ε = 1 og minPts = 3 (punktet selv teller med i nabolaget). Hvor mange kjernepunkter blir det?","DBSCAN on the 1D points 1, 2, 2.5, 3, 7, 8, 15 with ε = 1 and minPts = 3 (the point itself counts towards its neighbourhood). How many core points are there?"],
  o:[["3","3"],["1","1"],["4","4"],["6","6"]],a:0,
  x:[null,["1 får du hvis du ikke teller punktet selv: da har bare 2 nok naboer.","You get 1 if you don't count the point itself: then only 2 has enough neighbours."],["4 teller også punktet 1, men det har bare {1, 2} innenfor ε – det er et grensepunkt, ikke et kjernepunkt.","4 also counts point 1, but it only has {1, 2} within ε – it is a border point, not a core point."],["6 ville vært svaret med minPts = 2 (da blir også 1, 7 og 8 kjernepunkter).","6 would be the answer with minPts = 2 (then 1, 7 and 8 also become core points)."]],
@@ -3456,20 +3488,24 @@ QB.push(
 
 // ===== t:8 Dim. reduction & anomalies – math =====
 {id:"p-8.c1",t:8,s:"new",kind:"num",unit:["%","%"],
+ f:["Forklart varians for de k første komponentene = (λ<sub>1</sub> + … + λ<sub>k</sub>) / Σ<sub>j</sub> λ<sub>j</sub>", "Explained variance of the first k components = (λ<sub>1</sub> + … + λ<sub>k</sub>) / Σ<sub>j</sub> λ<sub>j</sub>"],
  q:["Kovariansmatrisen til et datasett har egenverdiene 4, 2, 1, 0.5 og 0.5. Hvor stor andel av variansen forklarer de to første prinsipalkomponentene? Svar i hele prosent.","A dataset's covariance matrix has eigenvalues 4, 2, 1, 0.5 and 0.5. What share of the variance do the first two principal components explain? Answer in whole percent."],
  ans:75,tol:0.5,
  w:["Total varians = 4 + 2 + 1 + 0.5 + 0.5 = 8. PC1 + PC2 = 4 + 2 = 6. 6/8 = 0.75 = 75 %.","Total variance = 4 + 2 + 1 + 0.5 + 0.5 = 8. PC1 + PC2 = 4 + 2 = 6. 6/8 = 0.75 = 75%."]},
 {id:"p-8.c2",t:8,s:"new",
+ f:["Forklart varians for de k første komponentene = (λ<sub>1</sub> + … + λ<sub>k</sub>) / Σ<sub>j</sub> λ<sub>j</sub>", "Explained variance of the first k components = (λ<sub>1</sub> + … + λ<sub>k</sub>) / Σ<sub>j</sub> λ<sub>j</sub>"],
  q:["Egenverdier (sortert): 5, 2, 1.5, 0.8, 0.4, 0.3. Hvor mange prinsipalkomponenter trenger du minst for å beholde minst 90 % av variansen?","Eigenvalues (sorted): 5, 2, 1.5, 0.8, 0.4, 0.3. What is the smallest number of principal components that keeps at least 90% of the variance?"],
  o:[["2","2"],["3","3"],["4","4"],["5","5"]],a:2,
  x:[["2 komponenter gir (5+2)/10 = 70 %.","2 components give (5+2)/10 = 70%."],["3 komponenter gir 85 % – fortsatt under 90 %.","3 components give 85% – still below 90%."],null,["5 komponenter gir 97 %, men 4 er allerede nok.","5 components give 97%, but 4 is already enough."]],
  w:["Sum = 10. Kumulativt: 50 %, 70 %, 85 %, 93 %, 97 %, 100 %. Første gang ≥ 90 % er ved 4 komponenter.","Sum = 10. Cumulative: 50%, 70%, 85%, 93%, 97%, 100%. The first time it is ≥ 90% is at 4 components."]},
 {id:"p-8.c3",t:8,s:"new",
+ f:["Egenverdier: det(Σ − λI) = 0 · egenvektorer: Σ<b>v</b> = λ<b>v</b><br>PC1 = egenvektoren med størst λ", "Eigenvalues: det(Σ − λI) = 0 · eigenvectors: Σ<b>v</b> = λ<b>v</b><br>PC1 = the eigenvector with the largest λ"],
  q:["Kovariansmatrisen er Σ = [[2, 1], [1, 2]]. Hvilken vektor er retningen til første prinsipalkomponent (egenvektoren med størst egenverdi)?","The covariance matrix is Σ = [[2, 1], [1, 2]]. Which vector is the direction of the first principal component (the eigenvector with the largest eigenvalue)?"],
  o:[["[1, 1]/√2","[1, 1]/√2"],["[1, −1]/√2","[1, −1]/√2"],["[1, 0]","[1, 0]"],["[0, 1]","[0, 1]"]],a:0,
  x:[null,["Dette er også en egenvektor (Σv = 1·v), men med den minste egenverdien 1 – altså PC2.","This is also an eigenvector (Σv = 1·v), but with the smaller eigenvalue 1 – i.e. PC2."],["Σ·[1, 0] = [2, 1], som ikke er parallell med [1, 0], så det er ingen egenvektor.","Σ·[1, 0] = [2, 1], which is not parallel to [1, 0], so it is not an eigenvector."],["Σ·[0, 1] = [1, 2], som ikke er parallell med [0, 1], så det er ingen egenvektor.","Σ·[0, 1] = [1, 2], which is not parallel to [0, 1], so it is not an eigenvector."]],
  w:["Σ·[1, 1] = [3, 3] = 3·[1, 1] → egenverdi 3. Σ·[1, −1] = [1, −1] → egenverdi 1. Største egenverdi er 3, så PC1 = [1, 1]/√2.","Σ·[1, 1] = [3, 3] = 3·[1, 1] → eigenvalue 3. Σ·[1, −1] = [1, −1] → eigenvalue 1. The largest eigenvalue is 3, so PC1 = [1, 1]/√2."]},
 {id:"p-8.c4",t:8,s:"new",kind:"num",
+ f:["Antall flaggede anomalier ≈ contamination · n", "Number of flagged anomalies ≈ contamination · n"],
  q:["En Isolation Forest trenes på 1 500 datapunkter med contamination = 0.02. Omtrent hvor mange punkter blir flagget som anomalier? Svar med et heltall.","An Isolation Forest is trained on 1,500 data points with contamination = 0.02. Roughly how many points are flagged as anomalies? Answer with an integer."],
  ans:30,tol:0.5,
  w:["contamination er andelen forventede avvik: terskelen settes slik at 2 % flagges. 0.02 · 1 500 = 30.","contamination is the expected share of anomalies: the threshold is set so that 2% are flagged. 0.02 · 1,500 = 30."]},
@@ -3509,14 +3545,16 @@ const FL_HOLES=[[1,1],[1,3],[2,3],[3,0]];
 QB.push(
 // ===== t:9 Reinforcement learning – math =====
 {id:"p-9.c1",t:9,s:"new",kind:"num",
- q:["Bellman-oppdateringen: Q<sub>new</sub>(S<sub>t</sub>,A<sub>t</sub>) ← (1−α)·Q(S<sub>t</sub>,A<sub>t</sub>) + α·(R<sub>t+1</sub> + γ·max<sub>A</sub> Q(S<sub>t+1</sub>,A)). Gitt Q(S<sub>t</sub>,A<sub>t</sub>) = 1,0, α = 0,1, R<sub>t+1</sub> = −1, γ = 0,95 og max<sub>A</sub> Q(S<sub>t+1</sub>,A) = 6. Regn ut Q<sub>new</sub> (to desimaler).",
-    "Bellman update: Q<sub>new</sub>(S<sub>t</sub>,A<sub>t</sub>) ← (1−α)·Q(S<sub>t</sub>,A<sub>t</sub>) + α·(R<sub>t+1</sub> + γ·max<sub>A</sub> Q(S<sub>t+1</sub>,A)). Given Q(S<sub>t</sub>,A<sub>t</sub>) = 1.0, α = 0.1, R<sub>t+1</sub> = −1, γ = 0.95 and max<sub>A</sub> Q(S<sub>t+1</sub>,A) = 6. Compute Q<sub>new</sub> (two decimals)."],
+ f:["Q<sub>new</sub>(S<sub>t</sub>,A<sub>t</sub>) ← (1 − α)·Q(S<sub>t</sub>,A<sub>t</sub>) + α·(R<sub>t+1</sub> + γ·max<sub>A</sub> Q(S<sub>t+1</sub>,A))", "Q<sub>new</sub>(S<sub>t</sub>,A<sub>t</sub>) ← (1 − α)·Q(S<sub>t</sub>,A<sub>t</sub>) + α·(R<sub>t+1</sub> + γ·max<sub>A</sub> Q(S<sub>t+1</sub>,A))"],
+ q:["Bruk Bellman-oppdateringen. Gitt Q(S<sub>t</sub>,A<sub>t</sub>) = 1,0, α = 0,1, R<sub>t+1</sub> = −1, γ = 0,95 og max<sub>A</sub> Q(S<sub>t+1</sub>,A) = 6. Regn ut Q<sub>new</sub> (to desimaler).",
+    "Use the Bellman update. Given Q(S<sub>t</sub>,A<sub>t</sub>) = 1.0, α = 0.1, R<sub>t+1</sub> = −1, γ = 0.95 and max<sub>A</sub> Q(S<sub>t+1</sub>,A) = 6. Compute Q<sub>new</sub> (two decimals)."],
  ans:1.37,tol:0.005,
  w:["(1−0,1)·1,0 = 0,9. Target: −1 + 0,95·6 = −1 + 5,7 = 4,7, og α·4,7 = 0,47. Q<sub>new</sub> = 0,9 + 0,47 = <b>1,37</b>. Selv med negativ belønning øker Q fordi neste tilstand er verdifull.",
     "(1−0.1)·1.0 = 0.9. Target: −1 + 0.95·6 = −1 + 5.7 = 4.7, and α·4.7 = 0.47. Q<sub>new</sub> = 0.9 + 0.47 = <b>1.37</b>. Even with a negative reward Q goes up, because the next state is valuable."]},
 {id:"p-9.c2",t:9,s:"new",
- q:["En agent får belønningene R<sub>t+1</sub> = 1, R<sub>t+2</sub> = 0 og R<sub>t+3</sub> = 2, og så slutter episoden. Med γ = 0,9: hva er den diskonterte returen G<sub>t</sub> = R<sub>t+1</sub> + γR<sub>t+2</sub> + γ²R<sub>t+3</sub>?",
-    "An agent receives rewards R<sub>t+1</sub> = 1, R<sub>t+2</sub> = 0 and R<sub>t+3</sub> = 2, and then the episode ends. With γ = 0.9, what is the discounted return G<sub>t</sub> = R<sub>t+1</sub> + γR<sub>t+2</sub> + γ²R<sub>t+3</sub>?"],
+ f:["G<sub>t</sub> = R<sub>t+1</sub> + γR<sub>t+2</sub> + γ<sup>2</sup>R<sub>t+3</sub> + … = Σ<sub>k≥0</sub> γ<sup>k</sup>R<sub>t+k+1</sub>", "G<sub>t</sub> = R<sub>t+1</sub> + γR<sub>t+2</sub> + γ<sup>2</sup>R<sub>t+3</sub> + … = Σ<sub>k≥0</sub> γ<sup>k</sup>R<sub>t+k+1</sub>"],
+ q:["En agent får belønningene R<sub>t+1</sub> = 1, R<sub>t+2</sub> = 0 og R<sub>t+3</sub> = 2, og så slutter episoden. Med γ = 0,9: hva er den diskonterte returen G<sub>t</sub>?",
+    "An agent receives rewards R<sub>t+1</sub> = 1, R<sub>t+2</sub> = 0 and R<sub>t+3</sub> = 2, and then the episode ends. With γ = 0.9, what is the discounted return G<sub>t</sub>?"],
  o:[["2,62","2.62"],["3","3"],["2,8","2.8"],["2,358","2.358"]],
  a:0,
  x:[null,
@@ -3525,6 +3563,7 @@ QB.push(
     ["2,358 = 0,9·1 + 0,729·2: du diskonterte allerede den første belønningen. R<sub>t+1</sub> har vekt γ⁰ = 1.","2.358 = 0.9·1 + 0.729·2: you already discounted the first reward. R<sub>t+1</sub> has weight γ⁰ = 1."]],
  w:["G = 1 + 0,9·0 + 0,81·2 = 1 + 1,62 = <b>2,62</b>. Belønningen k steg frem vektes med γ<sup>k−1</sup>.","G = 1 + 0.9·0 + 0.81·2 = 1 + 1.62 = <b>2.62</b>. A reward k steps ahead is weighted by γ<sup>k−1</sup>."]},
 {id:"p-9.c3",t:9,s:"new",
+ f:["ε-greedy: med sannsynlighet ε velges en uniformt tilfeldig handling blant alle |A|; ellers a = argmax<sub>a</sub> Q(s, a)", "ε-greedy: with probability ε a uniformly random action among all |A| is chosen; otherwise a = argmax<sub>a</sub> Q(s, a)"],
  q:["En ε-greedy-agent har ε = 0,2 og 4 lovlige handlinger. Med sannsynlighet ε velger den en tilfeldig handling blant <b>alle</b> 4 (som i <code>random.choice(available_moves)</code> i notatene), ellers den grådige. Hva er sannsynligheten for at den grådige handlingen blir valgt?",
     "An ε-greedy agent has ε = 0.2 and 4 legal actions. With probability ε it picks a random action among <b>all</b> 4 (as in <code>random.choice(available_moves)</code> in the notes), otherwise the greedy one. What is the probability that the greedy action is chosen?"],
  o:[["0,85","0.85"],["0,80","0.80"],["0,05","0.05"],["0,95","0.95"]],
@@ -3535,6 +3574,7 @@ QB.push(
     ["0,95 = 1 − ε/|A| er sannsynligheten for å <i>ikke</i> velge én bestemt handling tilfeldig, ikke det som spørres om.","0.95 = 1 − ε/|A| is the probability of <i>not</i> picking one particular action at random, which is not what is asked."]],
  w:["P(grådig) = (1 − ε) + ε/|A| = 0,8 + 0,2/4 = 0,8 + 0,05 = <b>0,85</b>.","P(greedy) = (1 − ε) + ε/|A| = 0.8 + 0.2/4 = 0.8 + 0.05 = <b>0.85</b>."]},
 {id:"p-9.c4",t:9,s:"new",kind:"num",
+ f:["Deterministisk: Q(s, a) = R(s, a) + γ · V(s′), der s′ er cellen handlingen a fører til", "Deterministic: Q(s, a) = R(s, a) + γ · V(s′), where s′ is the cell that action a leads to"],
  fig:{k:"grid",n:4,start:[0,0],goal:[3,3],holes:FL_HOLES,agent:[2,0],
       values:[[0.59,0.66,0.73,0.66],[0.66,0,0.81,0],[0.73,0.81,0.90,0],[0,0.90,1.00,0]]},
  q:["Deterministisk Frozen Lake. Tallene viser V(s) = max<sub>a</sub> Q(s,a). Belønningen er 1 når agenten går inn i 🎁 og ellers 0, og γ = 0,9. Agenten står i den markerte cellen. Hva er Q(s, <b>opp</b>)? (to desimaler)",
@@ -3610,6 +3650,7 @@ QB.push(
 
 // ===== t:10 XAI – math =====
 {id:"p-10.c1",t:10,s:"new",
+ f:["φ<sub>i</sub> = Σ<sub>S ⊆ N∖{i}</sub> <sup>|S|!·(n − |S| − 1)!</sup>⁄<sub>n!</sub> · [v(S ∪ {i}) − v(S)]", "φ<sub>i</sub> = Σ<sub>S ⊆ N∖{i}</sub> <sup>|S|!·(n − |S| − 1)!</sup>⁄<sub>n!</sub> · [v(S ∪ {i}) − v(S)]"],
  q:["Et spill med to spillere har v(∅) = 0, v({A}) = 10, v({B}) = 20 og v({A,B}) = 40. Hva er Shapley-verdien φ<sub>A</sub>?",
     "A two-player game has v(∅) = 0, v({A}) = 10, v({B}) = 20 and v({A,B}) = 40. What is the Shapley value φ<sub>A</sub>?"],
  o:[["15","15"],["10","10"],["20","20"],["13,33","13.33"]],
@@ -3621,18 +3662,21 @@ QB.push(
  w:["φ<sub>A</sub> = ½[(v({A}) − v(∅)) + (v({A,B}) − v({B}))] = ½[10 + 20] = <b>15</b>. φ<sub>B</sub> = ½[20 + 30] = 25, og 15 + 25 = 40 = v({A,B}) (efficiency).",
     "φ<sub>A</sub> = ½[(v({A}) − v(∅)) + (v({A,B}) − v({B}))] = ½[10 + 20] = <b>15</b>. φ<sub>B</sub> = ½[20 + 30] = 25, and 15 + 25 = 40 = v({A,B}) (efficiency)."]},
 {id:"p-10.c2",t:10,s:"new",kind:"num",
+ f:["φ<sub>i</sub> = Σ<sub>S ⊆ N∖{i}</sub> <sup>|S|!·(n − |S| − 1)!</sup>⁄<sub>n!</sub> · [v(S ∪ {i}) − v(S)]", "φ<sub>i</sub> = Σ<sub>S ⊆ N∖{i}</sub> <sup>|S|!·(n − |S| − 1)!</sup>⁄<sub>n!</sub> · [v(S ∪ {i}) − v(S)]"],
  q:["Taxi-varianten: tre passasjerer deler taxi langs samme rute og skal 2, 6 og 8 km. Kostnaden for en koalisjon er den lengste distansen i den (1 kr/km). Hva er Shapley-verdien for passasjer 3 (8 km)? Oppgi i kr med to desimaler.",
     "Taxi variant: three passengers share a taxi along the same route, riding 2, 6 and 8 km. A coalition's cost is its longest distance (1 kr/km). What is the Shapley value of passenger 3 (8 km)? Give it in kr with two decimals."],
  ans:4.67,tol:0.006,unit:["kr","kr"],
  w:["Del ruten i strekninger. 0–2 km deles av alle tre: 2/3 hver. 2–6 km deles av passasjer 2 og 3: 2 hver. 6–8 km betaler passasjer 3 alene: 2. φ<sub>3</sub> = 2/3 + 2 + 2 = 14/3 ≈ <b>4,67</b>. (φ<sub>1</sub> ≈ 0,67, φ<sub>2</sub> ≈ 2,67, og summen er 8: efficiency.) Det samme fås ved å ta snittet av marginalbidragene over alle 6 rekkefølger: (2+6+2+2+8+8)/6 = 28/6.",
     "Split the route into segments. 0–2 km is shared by all three: 2/3 each. 2–6 km is shared by passengers 2 and 3: 2 each. 6–8 km is paid by passenger 3 alone: 2. φ<sub>3</sub> = 2/3 + 2 + 2 = 14/3 ≈ <b>4.67</b>. (φ<sub>1</sub> ≈ 0.67, φ<sub>2</sub> ≈ 2.67, and the sum is 8: efficiency.) Averaging the marginal contributions over all 6 orderings gives the same: (2+6+2+2+8+8)/6 = 28/6."]},
 {id:"p-10.c3",t:10,s:"new",kind:"num",
+ f:["f(x) = φ<sub>0</sub> + Σ<sub>i</sub> φ<sub>i</sub>   (lokal nøyaktighet / efficiency)", "f(x) = φ<sub>0</sub> + Σ<sub>i</sub> φ<sub>i</sub>   (local accuracy / efficiency)"],
  q:["En SHAP-forklaring for én passasjer: φ<sub>0</sub> = E[f(x)] = 0,30 og f(x) = 0,72. φ<sub>Age</sub> = +0,10 og φ<sub>Fare</sub> = −0,05, og den eneste andre featuren er Sex. Hva er φ<sub>Sex</sub>? (to desimaler)",
     "A SHAP explanation for one passenger: φ<sub>0</sub> = E[f(x)] = 0.30 and f(x) = 0.72. φ<sub>Age</sub> = +0.10 and φ<sub>Fare</sub> = −0.05, and the only other feature is Sex. What is φ<sub>Sex</sub>? (two decimals)"],
  ans:0.37,tol:0.005,
  w:["Efficiency: f(x) = φ<sub>0</sub> + Σφ<sub>j</sub>. Så φ<sub>Sex</sub> = 0,72 − 0,30 − 0,10 − (−0,05) = <b>0,37</b>. Pass på fortegnet: en negativ SHAP-verdi trekkes fra, så den legges til igjen.",
     "Efficiency: f(x) = φ<sub>0</sub> + Σφ<sub>j</sub>. So φ<sub>Sex</sub> = 0.72 − 0.30 − 0.10 − (−0.05) = <b>0.37</b>. Watch the sign: a negative SHAP value is subtracted, so it gets added back."]},
 {id:"p-10.c4",t:10,s:"new",
+ f:["TCAV<sub>C,k,l</sub> = |{x ∈ X<sub>k</sub> : S<sub>C,k,l</sub>(x) > 0}| / |X<sub>k</sub>|", "TCAV<sub>C,k,l</sub> = |{x ∈ X<sub>k</sub> : S<sub>C,k,l</sub>(x) > 0}| / |X<sub>k</sub>|"],
  q:["Du beregner TCAV for konseptet «stripete» og klassen «sebra» i lag l. Av 160 sebrabilder har 112 positiv retningsderivert S<sub>C,k,l</sub> > 0. Hva er TCAV-skåren?",
     "You compute TCAV for the concept 'striped' and the class 'zebra' in layer l. Of 160 zebra images, 112 have a positive directional derivative S<sub>C,k,l</sub> > 0. What is the TCAV score?"],
  o:[["0,7","0.7"],["0,3","0.3"],["1,43","1.43"],["112","112"]],
@@ -3644,6 +3688,7 @@ QB.push(
  w:["TCAV<sub>Q</sub> = |{x ∈ X<sub>k</sub> : S<sub>C,k,l</sub>(x) > 0}| / |X<sub>k</sub>| = 112/160 = <b>0,7</b>. 70 % av sebrabildene får høyere sebra-skår når aktiveringen dyttes i «stripete»-retningen. Det er en global forklaring for klassen.",
     "TCAV<sub>Q</sub> = |{x ∈ X<sub>k</sub> : S<sub>C,k,l</sub>(x) > 0}| / |X<sub>k</sub>| = 112/160 = <b>0.7</b>. 70% of the zebra images get a higher zebra score when the activation is nudged in the 'striped' direction. It is a global explanation for the class."]},
 {id:"p-10.c5",t:10,s:"new",
+ f:["φ<sub>i</sub> = Σ<sub>S ⊆ N∖{i}</sub> <sup>|S|!·(n − |S| − 1)!</sup>⁄<sub>n!</sub> · [v(S ∪ {i}) − v(S)]", "φ<sub>i</sub> = Σ<sub>S ⊆ N∖{i}</sub> <sup>|S|!·(n − |S| − 1)!</sup>⁄<sub>n!</sub> · [v(S ∪ {i}) − v(S)]"],
  q:["Image SHAP deler et bilde i 20 superpiksler, som behandles som spillere. Hvor mange koalisjoner (delmengder av spillere) må en eksakt Shapley-beregning i prinsippet evaluere?",
     "Image SHAP splits an image into 20 superpixels, treated as players. How many coalitions (subsets of players) does an exact Shapley computation in principle have to evaluate?"],
  o:[["2²⁰ ≈ 1,05 millioner","2²⁰ ≈ 1.05 million"],["20! ≈ 2,4·10¹⁸","20! ≈ 2.4·10¹⁸"],["20² = 400","20² = 400"],["2·20 = 40","2·20 = 40"]],
@@ -3716,12 +3761,14 @@ QB.push(
 
 // ===== t:11 AI Act & ethics – math =====
 {id:"p-11.c1",t:11,s:"new",kind:"num",
+ f:["Artikkel 99: maks bot = det <b>høyeste</b> av et fast beløp og en prosentandel av global årsomsetning", "Article 99: maximum fine = the <b>higher</b> of a fixed amount and a percentage of global annual turnover"],
  q:["Et selskap med global årsomsetning på 2 milliarder euro bryter et forbud i Artikkel 5 (uakseptabel risiko). Hva er maksimal bot? Oppgi i millioner euro.",
     "A company with a global annual turnover of €2 billion breaches a prohibition in Article 5 (unacceptable risk). What is the maximum fine? Give it in millions of euros."],
  ans:140,tol:0.5,unit:["mill. €","million €"],
  w:["Forbudsbrudd: inntil 35 mill. € eller 7 % av global årsomsetning, <i>det som er høyest</i>. 7 % · 2000 mill. = 140 mill. > 35 mill., så maksimum er <b>140 mill. €</b>.",
     "Breaching a prohibition: up to €35M or 7% of global annual turnover, <i>whichever is higher</i>. 7% · €2000M = €140M > €35M, so the maximum is <b>€140M</b>."]},
 {id:"p-11.c2",t:11,s:"new",
+ f:["Artikkel 99: maks bot = det <b>høyeste</b> av et fast beløp og en prosentandel av global årsomsetning", "Article 99: maximum fine = the <b>higher</b> of a fixed amount and a percentage of global annual turnover"],
  q:["Et selskap med global årsomsetning på 300 millioner euro bryter kravene til et høyrisikosystem (ikke et forbud). Hva er maksimal bot?",
     "A company with a global annual turnover of €300 million breaches the requirements for a high-risk system (not a prohibition). What is the maximum fine?"],
  o:[["15 mill. €","€15M"],["9 mill. €","€9M"],["21 mill. €","€21M"],["35 mill. €","€35M"]],
@@ -3733,8 +3780,9 @@ QB.push(
  w:["De fleste andre brudd: inntil 15 mill. € eller 3 % av global omsetning, det som er høyest (Artikkel 99). max(15, 0,03·300 = 9) = <b>15 mill. €</b>.",
     "Most other breaches: up to €15M or 3% of global turnover, whichever is higher (Article 99). max(15, 0.03·300 = 9) = <b>€15M</b>."]},
 {id:"p-11.c3",t:11,s:"new",
- q:["En GPAI-modell har N = 70 milliarder parametre og er trent på D = 15 billioner (15·10¹²) tokens. Bruk tommelfingerregelen C ≈ 6·N·D FLOP. Hva gjelder etter Artikkel 51?",
-    "A GPAI model has N = 70 billion parameters and was trained on D = 15 trillion (15·10¹²) tokens. Use the rule of thumb C ≈ 6·N·D FLOP. What applies under Article 51?"],
+ f:["Treningsberegning: C ≈ 6 · N · D FLOP   (N = parametre, D = treningstokens)", "Training compute: C ≈ 6 · N · D FLOP   (N = parameters, D = training tokens)"],
+ q:["En GPAI-modell har N = 70 milliarder parametre og er trent på D = 15 billioner (15·10¹²) tokens. Bruk tommelfingerregelen for treningsberegning. Hva gjelder etter Artikkel 51?",
+    "A GPAI model has N = 70 billion parameters and was trained on D = 15 trillion (15·10¹²) tokens. Use the rule of thumb for training compute. What applies under Article 51?"],
  o:[["C ≈ 6,3·10²⁴ FLOP: under 10²⁵, så den er ikke automatisk antatt å ha systemisk risiko, men Kommisjonen kan likevel utpeke den (Anneks 13)",
      "C ≈ 6.3·10²⁴ FLOP: below 10²⁵, so it is not presumed to have systemic risk, but the Commission can still designate it (Annex 13)"],
     ["C ≈ 6,3·10²⁵ FLOP: over 10²⁵, så den er antatt å ha systemisk risiko","C ≈ 6.3·10²⁵ FLOP: above 10²⁵, so it is presumed to have systemic risk"],
@@ -3748,6 +3796,7 @@ QB.push(
  w:["6 · 7·10¹⁰ · 1,5·10¹³ = 6 · 1,05·10²⁴ = 6,3·10²⁴ < 10²⁵. Artikkel 51: over 10²⁵ FLOP gir antatt systemisk risiko. Kommisjonen kan i tillegg utpeke modeller etter Anneks 13 (parametre, datasett, brukere osv.).",
     "6 · 7·10¹⁰ · 1.5·10¹³ = 6 · 1.05·10²⁴ = 6.3·10²⁴ < 10²⁵. Article 51: above 10²⁵ FLOP means presumed systemic risk. The Commission can also designate models under Annex 13 (parameters, data sets, users, etc.)."]},
 {id:"p-11.c4",t:11,s:"new",kind:"num",
+ f:["Måneder mellom to datoer (samme dag i måneden) = 12 · Δår + Δmåned", "Months between two dates (same day of month) = 12 · Δyears + Δmonths"],
  q:["Etter den opprinnelige teksten skulle kravene til de fleste høyrisikosystemer gjelde fra 2. august 2026. Etter Digital Omnibus-endringene (2026) gjelder kravene for Anneks 3-systemer fra 2. desember 2027. Hvor mange måneder senere er det?",
     "Under the original text, the requirements for most high-risk systems were to apply from 2 August 2026. After the Digital Omnibus amendments (2026), the requirements for Annex 3 systems apply from 2 December 2027. How many months later is that?"],
  ans:16,tol:0.5,unit:["måneder","months"],
@@ -3813,6 +3862,18 @@ QB.push(
     "Article 51: above 10²⁵ FLOP means presumed systemic risk, with extra duties in Article 55 (evaluation, adversarial testing …). The Commission can also designate models below the threshold."]}
 );
 }
+
+// ---- q1d.js ----
+// More math (p-T.cN, with formula f) and visual (p-T.vN) questions, part 1
+
+// ---- q2d.js ----
+// More math (p-T.cN, with formula f) and visual (p-T.vN) questions, part 2
+
+// ---- q3d.js ----
+// More math (p-T.cN, with formula f) and visual (p-T.vN) questions, part 3
+
+// ---- q4d.js ----
+// More math (p-T.cN, with formula f) and visual (p-T.vN) questions, part 4
 
 // ---- fix1.js ----
 // Plan v3 audit fixes for q1.js / q1b.js / x1.js: questions referring to a plot without a fig.
@@ -3889,7 +3950,7 @@ const I18N = {
     examResult:"Eksamensresultat", examHistory:"Eksamenshistorikk", date:"Dato", noExams:"Ingen eksamener levert ennå.",
     resume:"Du har en påbegynt eksamen.", resumeBtn:"▶ Fortsett", discard:"Forkast", answeredOf:"besvart",
     themeDark:"🌙 Mørk", themeLight:"☀️ Lys", themeAuto:"🖥️ Auto",
-    kindNum:"Regn ut – skriv inn tallet", keysNum:"Skriv svaret · Enter låser · Esc forlater feltet", numPh:"Ditt svar", tolerance:"toleranse",
+    kindNum:"Regn ut – skriv inn tallet", keysNum:"Skriv svaret · Enter låser · Esc forlater feltet", numPh:"Ditt svar", formula:"📐 Formel", tolerance:"toleranse",
     noClear:"Som på eksamen: du kan bytte svar, men ikke fjerne et avgitt svar.", noClearMulti:"Minst ett alternativ må være krysset av når du først har svart (du kan bytte hvilke).",
     exportPdf:"📄 Eksporter PDF", repTitle:"Gradient Galaxy · TDT4172 – rapport", repExam:"Eksamen", repPractice:"Øving", repQ:"spørsmål", pdfHint:"Velg «Lagre som PDF» i utskriftsvinduet."
   },
@@ -3925,7 +3986,7 @@ const I18N = {
     examResult:"Exam result", examHistory:"Exam history", date:"Date", noExams:"No exams submitted yet.",
     resume:"You have an exam in progress.", resumeBtn:"▶ Resume", discard:"Discard", answeredOf:"answered",
     themeDark:"🌙 Dark", themeLight:"☀️ Light", themeAuto:"🖥️ Auto",
-    kindNum:"Calculate – type the number", keysNum:"Type your answer · Enter locks · Esc leaves the field", numPh:"Your answer", tolerance:"tolerance",
+    kindNum:"Calculate – type the number", keysNum:"Type your answer · Enter locks · Esc leaves the field", numPh:"Your answer", formula:"📐 Formula", tolerance:"tolerance",
     noClear:"Like the real exam: you can switch answers, but not remove an answer once given.", noClearMulti:"Once answered, at least one option must stay ticked (you can change which).",
     exportPdf:"📄 Export PDF", repTitle:"Gradient Galaxy · TDT4172 – report", repExam:"Exam", repPractice:"Practice", repQ:"questions", pdfHint:"Choose “Save as PDF” in the print dialog."
   }
@@ -4595,11 +4656,13 @@ const xNote = (q,i) => (q.x && q.x[i]) ? tx(q.x[i]) : "";
 const optText = (q,i) => q.kind==="tf" ? (i===0 ? "✔ " : "✘ ") + T(i===0 ? "true" : "false") : tx(q.o[i]);
 
 /* question body (text, figure, code) into given containers */
+function formulaHTML(q){ return q.f ? `<div class="formula"><span class="fl">${T("formula")}</span>${tx(q.f)}</div>` : ""; }
 function renderBody(q, metaEl, textEl, extraEl, extraBadges){
   metaEl.innerHTML = topicBadge(q.t) + srcBadge(q) + kindBadge(q) + (extraBadges||"");
   textEl.innerHTML = tx(q.q);
   const fh = figHTML(q.fig); extraEl.innerHTML = fh ? `<div class="fig">${fh}</div>` : "";
   if(q.c){ const pre=document.createElement("pre"); pre.className="code"; const c=document.createElement("code"); c.textContent=q.c; pre.appendChild(c); extraEl.prepend(pre); }
+  if(q.f) extraEl.insertAdjacentHTML("afterbegin", formulaHTML(q));
 }
 /* options HTML; reveal=true shows correctness */
 const numDisp = (q, v) => (v===null||v===undefined) ? "" : String(+Number(v).toFixed(6)).replace(".", S.lang==="no" ? "," : ".");
@@ -4900,7 +4963,7 @@ function buildReport(rep){
     h += `<h2>${T("debrief")}</h2>`;
     rep.qs.forEach((q,i) => { const ch = rep.ans[i], res = resultOf(q, ch), fh = figHTML(q.fig), gi = rep.groups ? rep.groups.findIndex(g => i>=g.start && i<g.start+g.len) : -1;
       h += `<div class="rq ${res==="correct"?"good":res==="wrong"?"bad":""}"><div class="rqh"><span>${res==="correct"?"✅":res==="wrong"?"❌":"⏭️"} ${i+1}. ${gi>=0 ? T("part")+" "+(gi+1)+" · " : ""}${TOPICS[q.t].emoji} ${TOPICS[q.t][S.lang]}${q.kind!=="single" ? " · "+kindName(q) : ""} · ${T(SRC_KEY[q.s]||"practice")}</span><b>${fmtSigned(sc.perQ[i])}</b></div>`
-        + `<div class="rqt">${tx(q.q)}</div>${q.c ? `<pre class="code"><code>${esc(q.c)}</code></pre>` : ""}${fh ? `<div class="fig">${fh}</div>` : ""}${renderExplain(q, ch, true)}</div>`; });
+        + `<div class="rqt">${tx(q.q)}</div>${formulaHTML(q)}${q.c ? `<pre class="code"><code>${esc(q.c)}</code></pre>` : ""}${fh ? `<div class="fig">${fh}</div>` : ""}${renderExplain(q, ch, true)}</div>`; });
     h += `<p style="color:#777;font-size:11px">${T("footer")}</p></div>`;
     $("#printReport").innerHTML = h;
   } finally { if(prev) root.setAttribute("data-theme", prev); else root.removeAttribute("data-theme"); }
