@@ -1,6 +1,6 @@
 const fs=require('fs'); const src=fs.readFileSync(process.argv[2],'utf8');
 const QB=[], XP={}, FIX={};
-eval(['q1.js','q2.js','q3.js','q4.js','x1.js','x2.js','x3.js','x4.js','q1b.js','q2b.js','q3b.js','q4b.js','q1c.js','q2c.js','q3c.js','q4c.js','q1d.js','q2d.js','q3d.js','q4d.js','guide.js','fix1.js','fix2.js','fix3.js','fix4.js'].map(f=>fs.readFileSync(f,'utf8')).join('\n')+'\n;globalThis.GUIDE=GUIDE;');
+eval(['q1.js','q2.js','q3.js','q4.js','x1.js','x2.js','x3.js','x4.js','q1b.js','q2b.js','q3b.js','q4b.js','q1c.js','q2c.js','q3c.js','q4c.js','q1d.js','q2d.js','q3d.js','q4d.js','q1e.js','q2e.js','q3e.js','q4e.js','guide.js','fix1.js','fix2.js','fix3.js','fix4.js'].map(f=>fs.readFileSync(f,'utf8')).join('\n')+'\n;globalThis.GUIDE=GUIDE;');
 for(const q of QB){ q.kind=q.kind||'single'; if(!q.x&&XP[q.id]) q.x=XP[q.id]; if(FIX[q.id]) Object.assign(q,FIX[q.id]); }
 const FIGKINDS=['scatter','line','bars','loss','rocMulti','cm','tree','fit','act','grid','waterfall','superpixel'];
 for(const id in FIX) if(!QB.some(q=>q.id===id)) console.log('FIX for unknown id',id);
@@ -62,4 +62,16 @@ r=scoreExam([S4,S4],[0,0],null); chk('no groups negative total',r.total,-0.5);
 const NU={kind:'num',ans:0.571,tol:0.005};
 chk('num correct',pointsFor(NU,0.57),1); chk('num wrong',pointsFor(NU,0.6),-0.25); chk('num empty',pointsFor(NU,null),0); chk('num zero is answer',resultOf({kind:'num',ans:0,tol:.01},0),'correct');
 chk('parse 0,57',parseNum('0,57'),0.57); chk('parse 1/3',parseNum('1/3'),1/3); chk('parse 57 %',parseNum('57 %'),57); chk('parse -2',parseNum('-2'),-2); chk('parse junk',parseNum('abc'),null); chk('parse empty',parseNum('  '),null); chk('parse 1e3',parseNum('1e3'),1000);
+// selection tests: question-count slider and the math-only pool
+{ const sel=src.split('/* ================= SELECTION ================= */')[1].split('function makeOrder')[0];
+  const TOPICS=Array.from({length:12},(_,i)=>({i})), S={examOnly:false,hist:{}}, ROUND=7;
+  const F=new Function('QB','S','TOPICS','ROUND',sel+'\nreturn {pool,buildBalancedMission,buildExam,pickFromTopic};')(QB,S,TOPICS,ROUND);
+  const uniq=a=>new Set(a.map(q=>q.id)).size===a.length;
+  for(const n of [4,7,8,12,40]){ const {qs,groups}=F.buildExam(n); chk('exam '+n+' length',qs.length,n); chk('exam '+n+' grouped',!!groups,n>=8); chk('exam '+n+' distinct',uniq(qs),true); }
+  for(const n of [1,7,25,40]){ const qs=F.buildBalancedMission(n); chk('practice '+n+' length',qs.length,n); chk('practice '+n+' distinct',uniq(qs),true); }
+  const mp=F.pool(true); chk('math pool all have f',mp.every(q=>q.f),true); chk('math pool = formula questions',mp.length,QB.filter(q=>q.f).length);
+  const mm=F.buildBalancedMission(40,true); chk('math 40 length',mm.length,Math.min(40,mp.length)); chk('math 40 all have f',mm.every(q=>q.f),true); chk('math 40 distinct',uniq(mm),true);
+  S.examOnly=true; chk('math ignores examOnly',F.pool(true).length,mp.length); chk('examOnly pool has no new',F.pool().every(q=>q.s!=='new'),true);
+  chk('math planet visit all f',F.pickFromTopic(10,40,new Set(),true).every(q=>q.f&&q.t===10),true);
+  const mper={}; mp.forEach(q=>mper[q.t]=(mper[q.t]||0)+1); console.log('math per topic',JSON.stringify(mper)); }
 console.log('ERRORS TOTAL',errs);
