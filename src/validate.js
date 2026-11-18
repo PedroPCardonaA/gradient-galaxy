@@ -38,6 +38,13 @@ for(const q of QB){
       for(const k of ['n','f','e','ex']) if(it[k]) it[k].forEach(x=>{ if(/undefined|NaN/.test(x)) err('guide undefined/NaN in '+k,it.id); }); }); });
   for(let t=0;t<12;t++) if(!gper[t]) err('guide missing topic',t);
   console.log('guide cards',gids.size,JSON.stringify(gper)); } }
+{ // LaTeX: every $…$ segment must parse with the bundled KaTeX
+  const katex=require('./vendor/katex.min.js'); let nt=0; const warn={};
+  const texCheck=(str,where)=>{ const parts=String(str).split('$'); if(parts.length%2===0){ err('unbalanced $ in',where); return; }
+    parts.forEach((p,i)=>{ if(i%2===0) return; nt++; try{ katex.renderToString('\\displaystyle '+p,{throwOnError:true,strict:(code,msg)=>{ warn[code]=(warn[code]||0)+1; return 'ignore'; }}); }catch(e){ err('KaTeX error in',where,':',e.message); } }); };
+  for(const q of QB) if(q.f) q.f.forEach((x,k)=>texCheck(x,q.id+'.f['+k+']'));
+  if(typeof GUIDE!=='undefined') for(const g of GUIDE) for(const it of g.items) for(const k of ['f','e','ex']) if(it[k]) it[k].forEach((x,j)=>texCheck(x,it.id+'.'+k+'['+j+']'));
+  console.log('tex segments',nt,'katex warnings',JSON.stringify(warn)); }
 console.log('total',QB.length,'errors',errs); console.log('per topic',JSON.stringify(per)); console.log('kinds',JSON.stringify(kinds),'sources',JSON.stringify(srcs));
 // scoring tests
 const grab=n=>src.match(new RegExp('function '+n+'\\([\\s\\S]*?\\n}\\n'))[0];

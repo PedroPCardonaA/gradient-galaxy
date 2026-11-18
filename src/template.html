@@ -125,6 +125,9 @@ pre.code code{background:none;padding:0}
 .formula{background:var(--code);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:10px 14px;margin:0 0 12px;font-size:15px;line-height:1.7;overflow-x:auto}
 .formula .fl{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .formula sub,.formula sup{font-size:.72em}
+.formula .katex{font-size:1.12em;display:inline-block;margin:.18em 0;max-width:100%;vertical-align:middle}
+.formula .katex-display{margin:.2em 0}
+.gexp .katex,.gcard details .katex{font-size:1.05em}
 .fig{display:flex;justify-content:center;margin:0 0 12px}
 .fig svg{max-width:100%;height:auto;background:var(--panel-solid);border-radius:12px;border:1px solid var(--border)}
 .opts{display:grid;gap:9px}
@@ -257,6 +260,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
+<style>/*__KATEX_CSS__*/</style>
 </head>
 <body>
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -395,6 +399,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0 6px}
 </div>
 <div id="printReport"></div>
 
+<script>/*__KATEX_JS__*/</script>
 <script>
 "use strict";
 /* ================= QUESTION BANK ================= */
@@ -824,7 +829,15 @@ const xNote = (q,i) => (q.x && q.x[i]) ? tx(q.x[i]) : "";
 const optText = (q,i) => q.kind==="tf" ? (i===0 ? "✔ " : "✘ ") + T(i===0 ? "true" : "false") : tx(q.o[i]);
 
 /* question body (text, figure, code) into given containers */
-function formulaHTML(q){ return q.f ? `<div class="formula"><span class="fl">${T("formula")}</span>${tx(q.f)}</div>` : ""; }
+/* LaTeX: text between $…$ is typeset with KaTeX (bundled, offline); results are cached */
+const TEXC = new Map();
+function texify(s){
+  s = String(s ?? ""); if(!s.includes("$") || typeof katex === "undefined") return s;
+  return s.split("$").map((p, i) => { if(i % 2 === 0) return p; let h = TEXC.get(p);
+    if(h === undefined){ try{ h = katex.renderToString("\\displaystyle " + p, {throwOnError:false, strict:"ignore"}); }catch(e){ h = esc(p); } TEXC.set(p, h); }
+    return h; }).join("");
+}
+function formulaHTML(q){ return q.f ? `<div class="formula"><span class="fl">${T("formula")}</span>${texify(tx(q.f))}</div>` : ""; }
 function renderBody(q, metaEl, textEl, extraEl, extraBadges){
   metaEl.innerHTML = topicBadge(q.t) + srcBadge(q) + kindBadge(q) + (extraBadges||"");
   textEl.innerHTML = tx(q.q);
@@ -1160,7 +1173,7 @@ function renderLog(){
 }
 
 /* ================= NAVIGATION GUIDE ================= */
-const plain = h => String(h ?? "").replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/g, " ").toLowerCase();
+const plain = h => String(h ?? "").replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/g, " ").replace(/\\[a-zA-Z]+/g, " ").replace(/[${}_^]/g, " ").toLowerCase();
 function renderGuide(){
   const qv = ($("#guideSearch").value || "").trim().toLowerCase();
   $("#guideSearch").placeholder = T("guideSearch");
@@ -1169,7 +1182,7 @@ function renderGuide(){
   $("#guideChips").innerHTML = GUIDE.map(g => { const tp = TOPICS[g.t], n = blocks.find(b => b.g === g)?.items.length || 0;
     return `<button class="pill" data-gt="${g.t}" ${n ? "" : "disabled style=\"opacity:.45\""}>${tp.emoji} ${esc(tp.planet)} <span style="color:var(--muted)">${n}</span></button>`; }).join("");
   $("#guideBody").innerHTML = blocks.length ? blocks.map(({g, items}) => `<div class="gtopic" id="gt-${g.t}"><div class="gtopic-h">${topicBadge(g.t)}<button class="ghost" data-gp="${g.t}">${T("practicePlanet")}</button></div><div class="guide-grid">` +
-    items.map(it => `<div class="gcard"><h4>${tx(it.n)}</h4><div class="formula">${tx(it.f)}</div><div class="gexp">${tx(it.e)}</div>${it.ex ? `<details><summary>${T("example")}</summary><div>${tx(it.ex)}</div></details>` : ""}</div>`).join("") +
+    items.map(it => `<div class="gcard"><h4>${tx(it.n)}</h4><div class="formula">${texify(tx(it.f))}</div><div class="gexp">${texify(tx(it.e))}</div>${it.ex ? `<details><summary>${T("example")}</summary><div>${texify(tx(it.ex))}</div></details>` : ""}</div>`).join("") +
     `</div></div>`).join("") : `<p class="hint">${T("guideNone")}</p>`;
   document.querySelectorAll("#guideChips [data-gt]").forEach(b => b.onclick = () => document.getElementById("gt-" + b.dataset.gt)?.scrollIntoView({behavior:"smooth", block:"start"}));
   document.querySelectorAll("#guideBody [data-gp]").forEach(b => b.onclick = () => startPractice(+b.dataset.gp));
